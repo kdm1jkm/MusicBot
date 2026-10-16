@@ -40,6 +40,41 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Config Migration Integration Tests")
 class ConfigMigrationIntegrationTest extends BaseConfigTest {
     // Uses BaseConfigTest's system property management
+
+    @Test
+    void versionThreeConfigDropsCookiesWhenRewrittenAndRetainsPlaybackSettings() throws IOException {
+        Path cookies = tempDir.resolve("youtube-cookies.txt");
+        writeFileContent(cookies, "# Netscape HTTP Cookie File\n");
+        Config original = ConfigFactory.parseString("""
+                meta.configVersion = 3
+                discord.token = "test-token"
+                discord.owner = 123456789
+                commands.prefix = "!!"
+                playback.maxYouTubePlaylistPages = 23
+                playback.audioSources.youtube = false
+                network.proxy.host = "proxy.example"
+                """).withValue("playback.youtube.cookiesFile",
+                com.typesafe.config.ConfigValueFactory.fromAnyRef(cookies.toString()));
+        Path configFile = createTempConfigFile(original.root().render());
+
+        Config migrated = ConfigLoader.loadMigratedUserConfig(configFile);
+        assertFalse(migrated.hasPathOrNull("playback.youtube.cookiesFile"));
+        assertEquals(original.withoutPath("playback.youtube.cookiesFile").withoutPath("meta.configVersion"),
+                migrated.withoutPath("meta.configVersion"));
+        Config merged = ConfigLoader.loadMergedConfig(migrated);
+        ConfigDiagnostics.Report diagnostics = ConfigDiagnostics.analyze(migrated, merged, ConfigFactory.load());
+        Path updated = ConfigUpdater.generateUpdatedConfig(configFile, migrated, diagnostics, ConfigUpdateType.MIGRATION);
+
+        assertNotNull(updated);
+        Config persisted = ConfigFactory.parseFile(updated.toFile());
+        assertEquals(4, persisted.getInt("meta.configVersion"));
+        assertFalse(persisted.hasPathOrNull("playback.youtube.cookiesFile"));
+        assertEquals("test-token", persisted.getString("discord.token"));
+        assertEquals("!!", persisted.getString("commands.prefix"));
+        assertEquals(23, persisted.getInt("playback.maxYouTubePlaylistPages"));
+        assertFalse(persisted.getBoolean("playback.audioSources.youtube"));
+        assertEquals("# Netscape HTTP Cookie File\n", readFileContent(cookies));
+    }
     
     @Nested
     @DisplayName("Startup with Legacy Config")
@@ -65,7 +100,7 @@ class ConfigMigrationIntegrationTest extends BaseConfigTest {
             
             // Verify migration occurred
             assertTrue(merged.hasPath("meta.configVersion"));
-            assertEquals(3, merged.getInt("meta.configVersion"));
+            assertEquals(4, merged.getInt("meta.configVersion"));
             
             // Verify values migrated correctly
             assertEquals("integration_test_token", merged.getString("discord.token"));
@@ -132,7 +167,7 @@ class ConfigMigrationIntegrationTest extends BaseConfigTest {
             assertEquals(3600L, merged.getLong("playback.maxTrackSeconds"));
             assertEquals(20, merged.getInt("playback.maxYouTubePlaylistPages"));
             assertFalse(merged.hasPath("playback.youtube.useOAuth"));
-            assertEquals("", merged.getString("playback.youtube.cookiesFile"));
+            assertFalse(merged.hasPath("playback.youtube.cookiesFile"));
             assertEquals(300L, merged.getLong("voice.aloneTimeUntilStopSeconds"));
             assertEquals("CustomPlaylists", merged.getString("paths.playlistsFolder"));
             assertFalse(merged.getBoolean("updates.alerts"));

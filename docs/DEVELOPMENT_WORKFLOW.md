@@ -98,8 +98,8 @@ git checkout -b fix/bug-description
 - Full build: `./gradlew --no-daemon build` runs unit tests (`test`), integration tests (`integrationTest`), and the shaded JAR task (`shadowJar`). The artifact is `build/libs/JMusicBot-2610.1.0-All.jar`.
 - Focused tasks: `./gradlew test`, `./gradlew integrationTest`, or `./gradlew shadowJar` (packaging only, without running tests).
 - Coverage: `./gradlew jacocoTestReport jacocoIntegrationTestReport` writes `build/reports/jacoco/test/jacocoTestReport.xml` and `build/reports/jacoco/integrationTest/jacocoIntegrationTestReport.xml`.
-- Docker-pruned packaging: `./gradlew shadowJar -Pdocker -x test -x integrationTest` excludes native dependencies not needed in the container. YouTube playback remains Windows x64 only.
-- Windows yt-dlp/Deno asset pins and checksum validation remain enforced during packaging; unavailable or corrupt assets fail the build.
+- Docker-pruned packaging: `./gradlew shadowJar -Pdocker -x test -x integrationTest` excludes native dependencies not needed in the container. YouTube uses the same embedded youtube-source backend on supported platforms.
+- YouTube uses the pinned `dev.lavalink.youtube:v2:1.18.2` Java dependency; packaging no longer downloads or embeds Windows yt-dlp/Deno executables.
 - Test Docker build: `docker build -t jmusicbot:test .`
 - Verify the bot works as expected
 
@@ -209,7 +209,7 @@ See [README Docker setup](../README.md#docker) and [docker-compose.example.yml](
    - Either run **Make Release** on `master` with version `2610.1.0` (it updates the version, builds, and prepares a draft release/tag), or create a release manually from the tag above. Use one path, not both for the same version.
    - Attach `build/libs/JMusicBot-2610.1.0-All.jar`; retain the `All` classifier in the published filename.
    - Review and publish the draft at [this fork's releases](https://github.com/kdm1jkm/MusicBot/releases).
-   - Preserve third-party notices and satisfy bundled yt-dlp GPLv3+ corresponding-source obligations; see [README](../README.md#bundled-youtube-playback-windows-x64).
+   - Preserve applicable dependency licenses and notices; youtube-source is included as a Java dependency, not a separate executable distribution.
 
 5. **Check Docker publication separately**, if enabled; do not advertise a registry tag until it is successfully published and accessible.
 

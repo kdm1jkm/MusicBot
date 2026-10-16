@@ -1,6 +1,6 @@
 # JMusicBot Architectural Analysis
 
-> **Historical snapshot, not the current release architecture.** This document records the arif-banai upstream state at the commit and date below. Its version, dependencies, platform assumptions, and diagrams are retained as historical context, not rewritten to describe this fork's 2610.1.0 release. For current setup and support, see [kdm1jkm/MusicBot](https://github.com/kdm1jkm/MusicBot) and the [README](../README.md). In particular, current YouTube playback uses bundled yt-dlp/EJS and Deno on Windows x64 only; Linux containers do not support that backend.
+> **Historical snapshot, not the current release architecture.** This document records the arif-banai upstream state at the commit and date below. Its version, dependencies, platform assumptions, and diagrams are retained as historical context, not rewritten to describe this fork's 2610.1.0 release. For current setup and support, see [kdm1jkm/MusicBot](https://github.com/kdm1jkm/MusicBot) and the [README](../README.md). Current YouTube playback uses the embedded youtube-source v2 module, without a separate Lavalink server or yt-dlp/Deno executables.
 
 > **Document Metadata**
 > | Field | Value |

@@ -14,7 +14,7 @@
 [![License](https://img.shields.io/github/license/kdm1jkm/MusicBot.svg)](https://github.com/kdm1jkm/MusicBot/blob/master/LICENSE)
 [![Build and Test](https://github.com/kdm1jkm/MusicBot/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/kdm1jkm/MusicBot/actions/workflows/build-and-test.yml)
 
-A Discord music bot with a clean interface. Most sources are cross-platform; the bundled YouTube backend requires Windows x64.
+A Discord music bot with a clean interface and embedded youtube-source playback.
 
 ## ⚠️ Check your Java Version and other requirements
 
@@ -43,7 +43,7 @@ This version of JMusicBot changes/updates various dependencies. To ensure your b
 ## Supported sources and formats
 JMusicBot supports all sources and formats supported by [lavaplayer](https://github.com/lavalink-devs/lavaplayer#supported-formats):
 ### Sources
-  * YouTube (Windows x64, bundled yt-dlp)
+  * YouTube (youtube-source)
   * SoundCloud
   * Bandcamp
   * Vimeo
@@ -65,7 +65,7 @@ JMusicBot supports all sources and formats supported by [lavaplayer](https://git
 
 ## Setup
 
-1. Install **Java 25 or newer** (`java -version`). For YouTube playback, use **Windows x64**; Linux also requires the native libraries described [below](#linux-system-requirements).
+1. Install **Java 25 or newer** (`java -version`). Linux also requires the native libraries described [below](#linux-system-requirements).
 2. Download `JMusicBot-2610.1.0-All.jar` from this fork's [releases](https://github.com/kdm1jkm/MusicBot/releases), or build it with the Gradle Wrapper as described below. Put it in a dedicated bot directory.
 3. In the [Discord Developer Portal](https://discord.com/developers/applications), create an application and bot, obtain its **bot token**, and enable **Message Content Intent** on the Bot page. Keep the token private. On OAuth2's URL Generator, select `bot` and `applications.commands`, grant the bot permissions to view/send messages and connect/speak in your music channels, then open the generated URL to invite it to your server.
 4. Enable Discord's **User Settings > Advanced > Developer Mode**, then right-click your own profile and choose **Copy User ID**. This is the owner ID, not the application or server ID.
@@ -78,7 +78,7 @@ JMusicBot supports all sources and formats supported by [lavaplayer](https://git
    }
    ```
 
-   Keep the other defaults unless needed. On Linux, macOS, or Docker, also set `playback.audioSources.youtube = false`. Never commit `config.txt` or share its token.
+   Keep the other defaults unless needed. Never commit `config.txt` or share its token.
 6. Run the command below **from that directory**. Configuration and playlists are relative to the working directory. In Discord, use `/help` or mention the bot followed by `help`.
 
 ## Running Directly (Without Docker)
@@ -98,23 +98,15 @@ Alternatively, use the stop-parsing token so the rest of the line is passed lite
 
 `-Dfile.encoding=UTF-8` ensures non-English characters (Cyrillic, Japanese, etc.) display correctly in Discord. On Windows or older JDKs, omitting it can cause mojibake in slash-command autocomplete and embeds.
 
-### Bundled YouTube playback (Windows x64)
+### YouTube playback
 
-Use `JMusicBot-2610.1.0-All.jar` with Java 25 or newer. The single JAR contains pinned yt-dlp, its EJS scripts, and Deno. No separate Python, yt-dlp, Deno, or FFmpeg installation is needed; no tools are downloaded at first run. Tools are checksum-verified and extracted into a private temporary directory when YouTube is first used, then removed on shutdown. The JAR directory can be read-only; the system temporary directory must permit executable extraction and launch.
+Use `JMusicBot-2610.1.0-All.jar` with Java 25 or newer. YouTube runs inside the bot through [youtube-source](https://github.com/lavalink-devs/youtube-source), using the Lavaplayer 2.x `v2` module pinned to **1.18.2**. A separate Lavalink server, yt-dlp, Python, Deno, and FFmpeg are not required. No executable tools are extracted or launched for YouTube.
 
-YouTube loading, search, playlists, seeking, and repeat use stable public video URLs; a fresh, accessibility-checked media URL is resolved immediately before playback. VOD uses WebM/Opus or M4A/AAC; live playback supports MPEG-TS or packed-AAC HLS and is not seekable. Other unsupported containers fail explicitly. YouTube playback is unavailable on Linux, macOS, and Docker; other enabled sources remain usable.
+The upstream source handles video URLs, search, playlists, seeking, and repeat playback. `playback.maxYouTubePlaylistPages` still limits playlist loading, and the existing Lavaplayer proxy setting also applies to YouTube. This backend has no Windows-only restriction; playback remains subject to the platform's Java/native audio support and YouTube's network, account, and IP restrictions. Private or restricted videos are not guaranteed to work.
 
-Anonymous public playback is the default. If YouTube requires account authentication or rejects your IP, supply a valid, locally exported **Netscape-format** cookies file in the GUI's optional YouTube cookies field or configuration:
+Configuration migrates automatically to version 4 and removes the retired `playback.youtube.cookiesFile` option. Cookie files and existing `youtubetoken.txt` files are left untouched and are not read by this backend. The GUI no longer offers a yt-dlp cookie field. This bot does not expose upstream OAuth, poToken, or remote-cipher configuration.
 
-```hocon
-playback.youtube.cookiesFile = "C:/MusicBot/youtube-cookies.txt"
-```
-
-Relative paths resolve from the bot working directory. A configured file must be readable; it is copied privately for each operation, never rewritten by the bot. The bot does not read browser profiles or export credentials. Keep cookie files private and out of source control. Account use carries rate-limit/ban risk; see [yt-dlp's YouTube cookie guidance](https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies). Bundling tools cannot override private-video, account, or network restrictions.
-
-Configuration migrates automatically to version 3. The retired YouTube OAuth/cipher setting and backend are removed; existing `youtubetoken.txt` files are left untouched but are no longer used.
-
-`./gradlew --no-daemon build` (Windows: `.\gradlew.bat --no-daemon build`) uses the pinned Gradle 9.1.0 Wrapper with JDK 25, runs unit and integration tests, and produces `build/libs/JMusicBot-2610.1.0-All.jar`. No global Gradle installation is needed; the version is set in `gradle.properties`. The build downloads checksum-pinned Windows assets and embeds them in the shaded `All.jar`; builds fail if assets are unavailable or corrupt. yt-dlp nightly `2026.10.10.233141` and Deno `2.9.7` are pinned; upgrading requires changing the build pins and checksums together, not runtime self-update. Bundled programs have their own licenses, including GPLv3+ terms for the standalone yt-dlp distribution. Notices and corresponding-source/build provenance are inside `META-INF/third-party/ytdlp/` and `META-INF/third-party/deno/`; redistributors must preserve notices and satisfy the applicable source-access obligations.
+`./gradlew --no-daemon build` (Windows: `.\gradlew.bat --no-daemon build`) uses the pinned Gradle 9.1.0 Wrapper with JDK 25, runs unit and integration tests, and produces `build/libs/JMusicBot-2610.1.0-All.jar`. No global Gradle installation is needed; the version is set in `gradle.properties`. Packaging resolves Java dependencies only; the former Windows yt-dlp/Deno assets and their distribution notices are no longer bundled.
 
 
 ### Linux System Requirements
@@ -147,12 +139,12 @@ Build a local image from this repository; these examples do not assume a publish
 docker build -t jmusicbot:2610.1.0 .
 ```
 
-The container includes Java 25 and runs headless. **YouTube is unavailable in the Linux container** because the embedded yt-dlp/Deno tools support Windows x64 only. Other enabled sources remain usable.
+The container includes Java 25 and runs headless. YouTube uses the same embedded youtube-source backend as desktop installations, subject to YouTube's network and IP restrictions.
 
 ### Quick Start
 
 1. Create a persistent bot directory, or use your existing directory containing `config.txt`, `Playlists/`, and other bot files.
-2. Follow [Setup](#setup) to create `config.txt`, set `discord.token` and `discord.owner`, and set `playback.audioSources.youtube = false`.
+2. Follow [Setup](#setup) to create `config.txt`, then set `discord.token` and `discord.owner`.
 3. The container runs as UID/GID `10001:10001`; make the mounted directory readable and writable by that user. For example, on Linux:
 
    ```bash
@@ -296,8 +288,7 @@ Please search this fork's [issues](https://github.com/kdm1jkm/MusicBot/issues) b
 Libraries and tools that make this possible:
  - [**JDA**](https://github.com/discord-jda/JDA)
  - [**lavaplayer**](https://github.com/lavalink-devs/lavaplayer)
- - [**yt-dlp**](https://github.com/yt-dlp/yt-dlp) and its [**EJS scripts**](https://github.com/yt-dlp/ejs)
- - [**Deno**](https://github.com/denoland/deno)
+ - [**youtube-source**](https://github.com/lavalink-devs/youtube-source)
 
 ## Editing
-See [Development Workflow](docs/DEVELOPMENT_WORKFLOW.md) for contribution and build instructions. This fork preserves the original authors' attribution and the project's [Apache 2.0 License](LICENSE). Bundled third-party programs retain their own licenses; redistributing the JAR also requires preserving their notices and meeting applicable GPLv3+ corresponding-source obligations described [above](#bundled-youtube-playback-windows-x64).
+See [Development Workflow](docs/DEVELOPMENT_WORKFLOW.md) for contribution and build instructions. This fork preserves the original authors' attribution and the project's [Apache 2.0 License](LICENSE). Bundled Java dependencies retain their own licenses and applicable notices.

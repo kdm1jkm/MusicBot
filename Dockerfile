@@ -55,7 +55,7 @@ FROM bitnami/minideb:trixie
 # OCI image labels for better traceability and management
 # The application is Apache-2.0; bundled dependencies and the runtime have separate licenses.
 LABEL org.opencontainers.image.title="JMusicBot" \
-      org.opencontainers.image.description="Independent JMusicBot fork; Docker supports non-YouTube sources only (bundled yt-dlp requires Windows x64)" \
+      org.opencontainers.image.description="Independent JMusicBot fork with embedded youtube-source playback" \
       org.opencontainers.image.url="https://github.com/kdm1jkm/MusicBot" \
       org.opencontainers.image.source="https://github.com/kdm1jkm/MusicBot" \
       org.opencontainers.image.vendor="kdm1jkm" \

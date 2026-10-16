@@ -56,7 +56,6 @@ public enum ConfigOption {
     NP_SHOW_PROGRESS_BAR("nowPlaying.showProgressBar", ConfigType.BOOLEAN, false, "Whether to show the now-playing progress bar"),
     UPDATE_ALERTS("updates.alerts", ConfigType.BOOLEAN, false, "Whether to alert owner about updates"),
     USE_EVAL("dangerous.eval", ConfigType.BOOLEAN, false, "Whether to enable eval command (DANGEROUS)"),
-    YOUTUBE_COOKIES_FILE("playback.youtube.cookiesFile", ConfigType.STRING, false, "YouTube Netscape cookies file (empty for anonymous playback)"),
     
     // Numeric options
     MAX_SECONDS("playback.maxTrackSeconds", ConfigType.LONG, false, "Maximum track length in seconds (0 = no limit)"),

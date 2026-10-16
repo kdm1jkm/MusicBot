@@ -162,9 +162,7 @@ public class DebugCmd extends OwnerCommand
                 .collect(Collectors.joining(", "));
         sb.append("  Disabled: ").append(disabled.isEmpty() ? "none" : disabled).append("\n");
         
-        sb.append("  YouTube backend: bundled yt-dlp (Windows x64)\n");
-        sb.append("  YouTube cookies: ").append(config.getYouTubeCookiesFile() == null || config.getYouTubeCookiesFile().isBlank()
-                ? "not configured" : "configured").append("\n");
+        sb.append("  YouTube backend: youtube-source (embedded Lavaplayer)\n");
     }
     
     private void appendPlaylistsSection(StringBuilder sb)

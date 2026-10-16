@@ -231,7 +231,6 @@ public class ListenerTestFixture
         // Config defaults
         when(config.getOwnerId()).thenReturn(OWNER_ID);
         when(config.useUpdateAlerts()).thenReturn(false);
-        when(config.getYouTubeCookiesFile()).thenReturn("");
         when(config.getDBots()).thenReturn(false);
 
         // Settings defaults
