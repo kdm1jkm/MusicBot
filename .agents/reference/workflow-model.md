@@ -64,7 +64,7 @@ Present **Open PR Candidates** and **Open Issue Candidates** separately with num
 | Event | Issue | PR |
 | --- | --- | --- |
 | Claim selected work after live recheck | add `agent:working` | add `agent:working` if present |
-| Normal handoff / budget exhausted | remove own `agent:working` | remove own `agent:working`; leave unpassed |
+| User-requested handoff | remove own `agent:working` | remove own `agent:working`; leave unpassed |
 | External/human blocker | remove own working; add blocked where relevant | same; comment reason/action |
 | PASS | remove own working | remove own working; add `agent:passed` |
 | Human requests post-PASS rework | no automatic mutation | human removes `agent:passed`; PR becomes eligible if otherwise actionable |
@@ -82,7 +82,7 @@ PASS requires BOTH objective evidence and independent agent quality judgment:
 - An independent agent/reviewer reviews current spec and final diff for correctness, maintainability, unrelated noise, security, and regressions. Record reviewer identity/context, reviewed commit, findings and resolutions. An implementer's self-review alone is insufficient. If no independent agent is available, hand off without PASS.
 - Final retention cleanup is committed/pushed before final checks/review; any substantive later change invalidates affected evidence. Never label an older head based on newer local results or vice versa.
 
-Self-review remains required before independent review. Bounded self-repair uses `K` from config across the session; do not loop indefinitely or reset on skill transitions. PASS means awaiting human merge, not automatic merge. Completion, handoff, and blocking always end with a report and STOP, never starting the next item.
+Self-review remains required before independent review. Evidence-driven self-repair follows config without a fixed iteration limit; preserve diagnoses and verification across skills and phases and continue actionable repairs. Do not repeat an unchanged failure without new evidence. Stop for a user-requested handoff or genuine human/external prerequisite, not an accumulated repair count. PASS means awaiting human merge, not automatic merge. Completion, authorized handoff, and blocking always end with a report and STOP, never starting the next item.
 
 ## Task file and handoff
 

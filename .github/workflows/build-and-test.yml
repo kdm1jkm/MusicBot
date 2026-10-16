@@ -1,24 +1,13 @@
 name: Build and Test
 
-# Build and test on PRs and master pushes
+# Build and test development integration and release promotion.
 # This workflow does NOT publish Docker images - that's handled by docker-publish.yml
 on:
   pull_request:
-    branches:
-      - master  # PRs targeting trunk
-      - dev     # Current GitHub default branch
+    branches: [dev, main]
   push:
-    branches:
-      - master  # Direct pushes to master
-    paths-ignore:
-      - '.github/**'  # Ignore GitHub config changes (workflows, actions, templates, etc.)
-      - 'README.md'
-      - 'LICENSE'
-      - 'CNAME'
-      - 'docs/**'
-      - '*.example.yml'
-      - '*.example.yaml'
-      - '.circleci/**'  # If not using CircleCI, ignore its config
+    branches: [dev, main]
+  workflow_dispatch:
 
 # Cancel in-progress runs for the same workflow and branch
 concurrency:
@@ -89,4 +78,5 @@ jobs:
         run: |
           .\gradlew.bat --no-daemon build
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 

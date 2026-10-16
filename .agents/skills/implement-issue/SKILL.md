@@ -24,9 +24,9 @@ MUST inspect working tree/worktrees, protect user changes, and create new work f
 
 MUST use Red → Green → Refactor and existing repository tools to satisfy Acceptance Criteria. Record failing-before/passing-after behavior when practical; exercise changed runtime paths. MUST make atomic commits of related changes under repository commit policy. MUST NOT weaken requirements/tests or include unrelated files. SHOULD self-review each coherent change for correctness and scope.
 
-## 5. Verify and bound repair
+## 5. Verify and repair
 
-MUST run applicable test/lint/typecheck/build commands and record actual outcomes. MAY repair up to K iterations across this session, including later CI/review fixes. At unresolved K exhaustion, MUST record root cause, attempts, remaining evidence and next action, synchronize reachable branch/PR state, remove own working claims, report and STOP. A human/external blocker additionally requires blocked label plus action comment. Never claim PASS for unavailable checks.
+MUST run applicable test/lint/typecheck/build commands and record actual outcomes. Follow the configured repair policy without a fixed iteration limit; preserve diagnoses, changes and verification across local, CI and review repairs. Continue actionable fixes until verification passes. On user-requested handoff or a genuine human/external prerequisite, record root cause, attempts, remaining evidence and next action, synchronize reachable branch/PR state, release own claims and report. A human/external blocker additionally requires blocked label plus action comment. Never claim PASS for unavailable checks.
 
 ## 6. Create or synchronize PR
 
@@ -34,11 +34,11 @@ MUST push the intended branch and create/update the PR with `Closes #<issue-numb
 
 ## 7. Review and stop
 
-MUST self-review the final diff, then run [review-and-pass-pr](../review-and-pass-pr/SKILL.md) without resetting ownership or K. Independent review and final-head CI are both mandatory. Apply retention cleanup before final checks/review. On PASS add passed only to PR, release working on Issue and PR, report evidence for human merge, and STOP. Otherwise leave an actionable handoff or explicit blocked state and STOP. MUST NOT auto-merge or start another Issue after this one.
+MUST self-review the final diff, then run [review-and-pass-pr](../review-and-pass-pr/SKILL.md) retaining ownership and repair history. Independent review and final-head CI are both mandatory. Apply retention cleanup before final checks/review. On PASS add passed only to PR, release working on Issue and PR, report evidence for human merge, and STOP. Otherwise continue actionable repairs or leave an authorized handoff or explicit blocked state. MUST NOT auto-merge or start another Issue after this one.
 
 ## Self-Check
 
 - Selected, eligible Issue and current spec govern the actual branch/code?
-- TDD, smoke evidence, atomic commits and repair count recorded?
+- TDD, smoke evidence, atomic commits and repair history recorded?
 - PR linked, final head independently reviewed and objectively verified, or honest handoff?
 - Retention, labels, user report and mandatory STOP completed?

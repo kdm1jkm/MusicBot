@@ -22,7 +22,7 @@ Language: follow the Language policy in [config](.agents/config.md) (Korean for 
 | [github-state-and-labels](.agents/skills/github-state-and-labels/SKILL.md) | GitHub claims, labels, dependencies |
 | [spec-management](.agents/skills/spec-management/SKILL.md) | Canonical specs and controlled evolution |
 | [git-and-worktree](.agents/skills/git-and-worktree/SKILL.md) | Safe branches, worktrees, atomic commits |
-| [tdd-and-verification](.agents/skills/tdd-and-verification/SKILL.md) | TDD, bounded repair, independent PASS review |
+| [tdd-and-verification](.agents/skills/tdd-and-verification/SKILL.md) | TDD, evidence-driven repair without a fixed iteration limit, independent PASS review |
 | [task-file-and-handoff](.agents/skills/task-file-and-handoff/SKILL.md) | Task files and cross-session handoff |
 
 ## Repository paths and project conventions
@@ -32,6 +32,6 @@ Language: follow the Language policy in [config](.agents/config.md) (Korean for 
 - [Agent compatibility](.agents/reference/compatibility.md)
 - Task and handoff files: `.agents/tasks/<issue-number>.md`
 - Project documentation:
-  - [Development workflow](docs/DEVELOPMENT_WORKFLOW.md) — trunk branch `master`, required PR branch naming (`feature/<slug>`, `fix/<slug>`, `chore/<slug>`, `deps/<slug>`, `release/<version>`), commit convention (`<type>: <description>`), Gradle 9.1.0 / JDK 25 build and release process
+  - [Development workflow](docs/DEVELOPMENT_WORKFLOW.md) — default development branch `dev`, tagged merge-commit promotion to `main`, required PR branch naming (`feature/<slug>`, `fix/<slug>`, `chore/<slug>`, `deps/<slug>`, `release/<version>`), commit convention (`<type>: <description>`), Gradle 9.1.0 / JDK 25 build and release process
   - [Architecture](docs/ARCHITECTURE.md) — historical architectural reference
   - [README (EN)](README.md) / [README (KO)](README.ko.md)

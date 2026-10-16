@@ -1,20 +1,7 @@
 name: Publish Docker Image
 
-# Docker publishing workflow - gated by successful build-and-test completion
-# This ensures images are only published after tests pass on master
+# Publish only immutable promoted release tags; beta tags never publish latest.
 on:
-  # Triggered after successful build-and-test on master
-  # Note: The branches filter checks workflow_run.head_branch, which is the source branch
-  # of the triggering workflow. For PRs targeting master, head_branch is the PR source
-  # branch (not master), so this filter already excludes PR-triggered builds. Only direct
-  # pushes to master will have head_branch == 'master' and trigger this workflow.
-  workflow_run:
-    workflows: ["Build and Test"]
-    types:
-      - completed
-    branches:
-      - master
-  # Also trigger on version tags (v*) for releases
   push:
     tags:
       - 'v*'
@@ -32,11 +19,7 @@ jobs:
     name: Publish Docker Image
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    # Only run if the triggering workflow succeeded (for workflow_run events)
-    # For tag pushes, always run
-    if: |
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+    if: ${{ !contains(github.ref_name, '.beta-') }}
     
     permissions:
       contents: read
@@ -45,10 +28,19 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-        # For workflow_run events, checkout the commit that triggered the original workflow
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
-          fetch-depth: 0  # Full history needed for git commands
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate promoted release tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          [[ "$TAG" =~ ^v[0-9]{2}(0[1-9]|1[0-2])\.[0-9]+\.[0-9]+$ ]]
+          git merge-base --is-ancestor HEAD origin/main
+          [[ $(git rev-list --parents -n 1 HEAD | wc -w) -eq 3 ]]
 
       - name: Set up Java Environment
         uses: actions/setup-java@v5
@@ -66,31 +58,12 @@ jobs:
           PROJECT_VERSION=$(./gradlew --no-daemon -q printVersion)
           SHA_SHORT=$(git rev-parse --short HEAD)
           
-          # Determine if this is a tag build or master branch build
-          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref_type }}" == "tag" ]]; then
-            # For tag builds, use the git tag version (strip 'v' prefix)
-            VERSION="${GITHUB_REF#refs/tags/v}"
-            IS_TAG_BUILD="true"
-          else
-            # For master builds, use the Gradle project version
-            VERSION="$PROJECT_VERSION"
-            IS_TAG_BUILD="false"
-          fi
-          
-          # Check if version is a SNAPSHOT
-          if [[ "$VERSION" =~ -SNAPSHOT$ ]]; then
-            IS_SNAPSHOT="true"
-          else
-            IS_SNAPSHOT="false"
-          fi
-          
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          [[ "$VERSION" == "$PROJECT_VERSION" ]]
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "project_version=$PROJECT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release version: $VERSION, SHA: $SHA_SHORT"
           echo "sha=$SHA_SHORT" >> "$GITHUB_OUTPUT"
           echo "image_name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
-          echo "is_tag_build=$IS_TAG_BUILD" >> "$GITHUB_OUTPUT"
-          echo "is_snapshot=$IS_SNAPSHOT" >> "$GITHUB_OUTPUT"
-          echo "Extracted version: $VERSION (project: $PROJECT_VERSION), SHA: $SHA_SHORT, is_tag: $IS_TAG_BUILD, is_snapshot: $IS_SNAPSHOT"
 
       - name: Generate Docker metadata
         id: meta
@@ -101,13 +74,10 @@ jobs:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
         with:
           images: ${{ env.REGISTRY }}/${{ steps.metadata.outputs.image_name }}
-          # Tag rules:
-          # - For tag builds: version tag (from git tag) + sha tag
-          # - For master builds: latest + sha + version (if not SNAPSHOT)
+          # Only validated promoted release tags can update latest.
           tags: |
-            type=raw,value=${{ steps.metadata.outputs.version }},enable=${{ steps.metadata.outputs.is_tag_build == 'true' }}
-            type=raw,value=latest,enable=${{ steps.metadata.outputs.is_tag_build == 'false' }}
-            type=raw,value=${{ steps.metadata.outputs.version }},enable=${{ steps.metadata.outputs.is_tag_build == 'false' && steps.metadata.outputs.is_snapshot == 'false' }}
+            type=raw,value=${{ steps.metadata.outputs.version }}
+            type=raw,value=latest
             type=raw,value=sha-${{ steps.metadata.outputs.sha }}
           # The application is Apache-2.0; the distribution includes separately licensed components.
           labels: |

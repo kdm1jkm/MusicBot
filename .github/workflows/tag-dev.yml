@@ -1,0 +1,148 @@
+name: Tag successful dev builds
+
+on:
+  workflow_run:
+    workflows: [Build and Test]
+    types: [completed]
+    branches: [dev]
+
+permissions:
+  contents: read
+
+jobs:
+  tag-dev:
+    if: >-
+      ${{ github.event_name == 'workflow_run' &&
+          github.event.workflow_run.name == 'Build and Test' &&
+          github.event.workflow_run.status == 'completed' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_branch == 'dev' &&
+          github.event.workflow_run.repository.full_name == github.repository &&
+          github.event.workflow_run.head_repository.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: write
+    # Ineligible events never enter this queue. A replaced pending job is safe:
+    # each eligible job drains the complete successful dev CI history.
+    concurrency:
+      group: dev-beta-tags
+      cancel-in-progress: false
+    steps:
+      - name: Checkout the exact successful commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Reconcile successful dev commits with beta tags
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_WORKFLOW_SHA: ${{ github.workflow_sha }}
+        run: |
+          set -euo pipefail
+          export LC_ALL=C
+          helper="$RUNNER_TEMP/tag-dev.sh"
+          runs="$RUNNER_TEMP/dev-ci-runs.json"
+          candidates="$RUNNER_TEMP/dev-ci-candidates.tsv"
+          jobs="$RUNNER_TEMP/dev-ci-jobs.json"
+
+          # The triggering commit may predate this helper. Use the immutable
+          # workflow-definition commit, but read every version from its CI SHA.
+          git show "${TAG_WORKFLOW_SHA}:.github/scripts/tag-dev.sh" > "$helper"
+          source "$helper"
+          tag_dev_refresh_refs
+
+          # Do not filter the REST request: GitHub caps filtered run searches at
+          # 1,000 results. Paginate all runs and apply eligibility locally so a
+          # coalesced concurrency queue cannot silently lose successful commits.
+          gh api --paginate --slurp \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/build-and-test.yml/runs?per_page=100" \
+            > "$runs"
+          jq -r --arg repository "$GITHUB_REPOSITORY" '
+            [.[].workflow_runs[] | select(
+              .name == "Build and Test" and
+              ((.status == "completed" and .conclusion == "success") or .run_attempt > 1) and
+              .event == "push" and .head_branch == "dev" and
+              .repository.full_name == $repository and
+              .head_repository.full_name == $repository
+            )]
+            | sort_by(.run_number, .run_attempt)
+            | .[] | [.id, .run_attempt, .head_sha, .status, (.conclusion // "-")] | @tsv
+          ' "$runs" > "$candidates"
+
+          failed=0
+          while IFS=$'\t' read -r run_id latest sha latest_status latest_conclusion; do
+            if ! git merge-base --is-ancestor "$sha" refs/remotes/origin/dev; then
+              printf 'Skipping run %s: %s is no longer on origin/dev.\n' "$run_id" "$sha"
+              continue
+            fi
+            version_valid=1
+            if ! base=$(tag_dev_base_version "$sha"); then
+              version_valid=0
+            fi
+            if [[ "$version_valid" == 1 ]]; then
+              if existing=$(tag_dev_existing_tag "$sha" "$base"); then
+                printf '%s already has %s; skipping historical job lookup.\n' "$sha" "$existing"
+                continue
+              else
+                result=$?
+                if [[ "$result" != 1 ]]; then
+                  exit "$result"
+                fi
+              fi
+            fi
+
+            # A failed/in-progress rerun must not hide an earlier successful
+            # attempt whose completion event was coalesced out of the queue.
+            jobs_loaded=0
+            for ((attempt=latest; attempt >= 1; attempt--)); do
+              if [[ "$attempt" == "$latest" ]]; then
+                [[ "$latest_status" == completed && "$latest_conclusion" == success ]] || continue
+              else
+                successful=$(gh api \
+                  "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/attempts/${attempt}" \
+                  --jq '.status == "completed" and .conclusion == "success"')
+                [[ "$successful" == true ]] || continue
+              fi
+              if [[ "$version_valid" != 1 ]]; then
+                failed=1
+                break
+              fi
+
+              # A failed-jobs-only rerun can reuse a previous successful job.
+              # Check each platform's last job at or before this successful
+              # attempt, never a newer attempt's result or a skipped job.
+              if [[ "$jobs_loaded" == 0 ]]; then
+                gh api --paginate --slurp \
+                  "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?filter=all&per_page=100" \
+                  > "$jobs"
+                jobs_loaded=1
+              fi
+              if jq -e --arg sha "$sha" --argjson attempt "$attempt" '
+                [.[].jobs[] | select((.run_attempt // 1) <= $attempt)] as $jobs
+                | all(["Build and Test", "Windows x64 Build"][];
+                    . as $required
+                    | [$jobs[] | select(.name == $required)]
+                    | group_by(.run_attempt // 1) | (last // [])
+                    | length == 1 and all(.[];
+                        .head_sha == $sha and
+                        .status == "completed" and .conclusion == "success"))
+              ' "$jobs" > /dev/null; then
+                bash "$helper" "$sha"
+                break
+              else
+                result=$?
+                if [[ "$result" != 1 ]]; then
+                  exit "$result"
+                fi
+                printf 'Skipping run %s attempt %s: both required platform jobs did not succeed.\n' \
+                  "$run_id" "$attempt"
+              fi
+            done
+          done < "$candidates"
+          exit "$failed"

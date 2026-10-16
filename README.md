@@ -11,7 +11,7 @@
 [![Downloads](https://img.shields.io/github/downloads/kdm1jkm/MusicBot/total.svg)](https://github.com/kdm1jkm/MusicBot/releases/latest)
 [![Stars](https://img.shields.io/github/stars/kdm1jkm/MusicBot.svg)](https://github.com/kdm1jkm/MusicBot/stargazers)
 [![Release](https://img.shields.io/github/release/kdm1jkm/MusicBot.svg)](https://github.com/kdm1jkm/MusicBot/releases/latest)
-[![License](https://img.shields.io/github/license/kdm1jkm/MusicBot.svg)](https://github.com/kdm1jkm/MusicBot/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/kdm1jkm/MusicBot.svg)](https://github.com/kdm1jkm/MusicBot/blob/main/LICENSE)
 [![Build and Test](https://github.com/kdm1jkm/MusicBot/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/kdm1jkm/MusicBot/actions/workflows/build-and-test.yml)
 
 A Discord music bot with a clean interface and embedded youtube-source playback.
@@ -272,7 +272,7 @@ proxy {
 
 ## Development Workflow
 
-This project follows a **trunk-based development** workflow. The `master` branch is always releasable, and all work happens in short-lived branches:
+Development integrates into the default **`dev`** branch. Successful dev CI creates `vYYMM.major.minor.beta-n` tags. **`main`** accepts only release-tagged merge commits promoted from dev; ordinary work happens in short-lived branches:
 
 - **`feature/<slug>`** - New features (e.g., `feature/new-player-ui`)
 - **`fix/<slug>`** - Bug fixes (e.g., `fix/youtube-playback`)

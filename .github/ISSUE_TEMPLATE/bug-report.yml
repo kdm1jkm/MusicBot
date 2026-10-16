@@ -49,7 +49,7 @@ body:
       label: Checklist
       description: Before submitting your issue, please affirm the following
       options:
-        - label: I have checked [this fork's documentation](https://github.com/kdm1jkm/MusicBot/blob/master/README.md)
+        - label: I have checked [this fork's documentation](https://github.com/kdm1jkm/MusicBot/blob/dev/README.md)
           required: true
         - label: I have searched for similar issues [in this fork](https://github.com/kdm1jkm/MusicBot/issues?q=is%3Aissue)
           required: true

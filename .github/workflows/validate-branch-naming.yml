@@ -4,7 +4,7 @@ name: Validate Branch Naming
 # Runs only on pull requests
 on:
   pull_request:
-    types: [opened]
+    types: [opened, synchronize, reopened, edited]
 
 # Cancel in-progress runs for the same PR
 concurrency:
@@ -18,9 +18,21 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Validate branch name
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+          BASE_BRANCH: ${{ github.base_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
         run: |
           # Extract branch name from pull request head ref
-          BRANCH_NAME="${{ github.head_ref }}"
+          BRANCH_NAME="$HEAD_BRANCH"
+          if [[ "$BASE_BRANCH" == main ]]; then
+            [[ "$BRANCH_NAME" == dev && "$HEAD_REPO" == "$GITHUB_REPOSITORY" ]] || {
+              echo 'Only dev from this repository may propose main promotion.'
+              exit 1
+            }
+            echo 'dev -> main requires Promote Main; ordinary merge is blocked by ruleset.'
+            exit 0
+          fi
           
           echo "Validating branch: $BRANCH_NAME"
           
