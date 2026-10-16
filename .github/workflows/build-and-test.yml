@@ -1,23 +1,13 @@
 name: Build and Test
 
-# Build and test on PRs and master pushes
+# Build and test development integration and release promotion.
 # This workflow does NOT publish Docker images - that's handled by docker-publish.yml
 on:
   pull_request:
-    branches:
-      - master  # PRs targeting trunk
+    branches: [dev, main]
   push:
-    branches:
-      - master  # Direct pushes to master
-    paths-ignore:
-      - '.github/**'  # Ignore GitHub config changes (workflows, actions, templates, etc.)
-      - 'README.md'
-      - 'LICENSE'
-      - 'CNAME'
-      - 'docs/**'
-      - '*.example.yml'
-      - '*.example.yaml'
-      - '.circleci/**'  # If not using CircleCI, ignore its config
+    branches: [dev, main]
+  workflow_dispatch:
 
 # Cancel in-progress runs for the same workflow and branch
 concurrency:
@@ -107,7 +97,7 @@ jobs:
           import java.util.concurrent.TimeUnit;
 
           public class BundledToolsSmoke {
-              static void version(Path executable, String expected) throws Exception {
+              static void version(Path executable, String expected, boolean allowBuildMetadata) throws Exception {
                   Process process = new ProcessBuilder(executable.toAbsolutePath().toString(), "--version").start();
                   process.getOutputStream().close();
                   try {
@@ -115,10 +105,15 @@ jobs:
                           throw new IllegalStateException("Bundled tool version deadline exceeded");
                       }
                       String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
-                      if (process.exitValue() != 0 || !output.lines().anyMatch(line -> line.equals(expected))) {
+                      String versionLine = output.lines().findFirst().orElse("");
+                      boolean matches = versionLine.equals(expected)
+                              || (allowBuildMetadata && versionLine.startsWith(expected)
+                                  && versionLine.startsWith(" (", expected.length())
+                                  && versionLine.endsWith(")") && versionLine.length() > expected.length() + 3);
+                      if (process.exitValue() != 0 || !matches) {
                           throw new IllegalStateException("Bundled tool version mismatch: " + executable.getFileName());
                       }
-                      System.out.println(expected);
+                      System.out.println(versionLine);
                   } finally {
                       process.destroyForcibly();
                       process.getInputStream().close();
@@ -135,8 +130,8 @@ jobs:
                   Path directory;
                   try (var runtime = BundledYtDlpRuntime.open()) {
                       directory = runtime.executable().getParent();
-                      version(runtime.executable(), tools.getProperty("ytdlp.version"));
-                      version(runtime.denoExecutable(), "deno " + tools.getProperty("deno.version"));
+                      version(runtime.executable(), tools.getProperty("ytdlp.version"), false);
+                      version(runtime.denoExecutable(), "deno " + tools.getProperty("deno.version"), true);
                   }
                   if (Files.exists(directory)) throw new IllegalStateException("Bundled runtime directory leaked");
               }

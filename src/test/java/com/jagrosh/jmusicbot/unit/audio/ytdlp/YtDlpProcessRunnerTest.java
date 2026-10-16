@@ -29,6 +29,23 @@ class YtDlpProcessRunnerTest {
         return new YtDlpProcessRunner(YtDlpTestChild.javaPrefix(), List.of(), null, 32 * 1024 * 1024);
     }
 
+    private YtDlpProcessRunner operandRunner() throws IOException {
+        if (!System.getProperty("os.name").startsWith("Windows")) return runner();
+        // Java's Windows launcher converts argv through ANSI. Test the process boundary
+        // with a Unicode-native consumer instead of losing characters inside that fixture.
+        Path script = temporary.resolve("operand.ps1");
+        Files.writeString(script, """
+                [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+                if ($args.Count -ne 2 -or $args[0] -cne '--') { exit 11 }
+                @{ operand = $args[1] } | ConvertTo-Json -Compress
+                """, StandardCharsets.UTF_8);
+        Path powershell = Path.of(System.getenv("SystemRoot"), "System32", "WindowsPowerShell",
+                "v1.0", "powershell.exe");
+        return new YtDlpProcessRunner(List.of(powershell.toString(), "-NoLogo", "-NoProfile",
+                "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", script.toString()),
+                List.of(), null, 4096);
+    }
+
     private static List<String> args(String mode) { return List.of("--", mode); }
     private static List<String> recorded(String mode, Path file) { return List.of("--test-file", file.toString(), "--", mode); }
 
@@ -201,7 +218,7 @@ class YtDlpProcessRunnerTest {
     }
 
     @Test void optionLookingOperandRemainsOneDataArgumentAndBadShapeIsRejected() throws Exception {
-        try (YtDlpProcessRunner runner = runner()) {
+        try (YtDlpProcessRunner runner = operandRunner()) {
             String operand = "--exec=malicious 윤하 & calc.exe";
             assertEquals(operand, runner.run(args(operand), NORMAL).get("operand").asText());
             assertThrows(IllegalArgumentException.class, () -> runner.run(List.of("--", "one", "two"), NORMAL));

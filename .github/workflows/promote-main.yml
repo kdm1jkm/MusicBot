@@ -1,0 +1,97 @@
+name: Promote Main
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '승격할 정식 버전 (예: 2610.1.1, v 접두사 제외)'
+        required: true
+        type: string
+      expected_dev_sha:
+        description: '검토와 CI가 완료된 dev 커밋 SHA (40자 전체)'
+        required: true
+        type: string
+
+# The normal token cannot modify branches or tags. Only the main promotion
+# deploy key is authorized by the main ruleset to push the atomic promotion.
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: main-promotion
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: github.ref == 'refs/heads/dev'
+    # This environment allows deployments only from dev and holds the SSH key.
+    environment: main-promotion
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERSION: ${{ inputs.version }}
+      EXPECTED_DEV_SHA: ${{ inputs.expected_dev_sha }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Checkout dev with promotion deploy key
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+          ssh-key: ${{ secrets.MAIN_PROMOTION_KEY }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Validate reviewed dev commit and successful Linux and Windows CI
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ $VERSION =~ ^[0-9]{4}\.[0-9]+\.[0-9]+$ ]] || {
+            echo '버전은 YYMM.major.minor 형식이어야 합니다.' >&2
+            exit 1
+          }
+          [[ ${VERSION:2:2} =~ ^(0[1-9]|1[0-2])$ ]] || {
+            echo '버전의 월은 01~12여야 합니다.' >&2
+            exit 1
+          }
+          EXPECTED_DEV_SHA=${EXPECTED_DEV_SHA,,}
+          export EXPECTED_DEV_SHA
+          [[ $EXPECTED_DEV_SHA =~ ^[0-9a-f]{40}$ ]] || {
+            echo '검토한 dev SHA 40자 전체가 필요합니다.' >&2
+            exit 1
+          }
+          [[ $(git rev-parse refs/remotes/origin/dev) == "$EXPECTED_DEV_SHA" ]] || {
+            echo 'dev HEAD가 검토한 SHA에서 변경되었습니다.' >&2
+            exit 1
+          }
+          runs=$(gh api --method GET \
+            "repos/$GH_REPO/actions/workflows/build-and-test.yml/runs" \
+            -f branch=dev -f event=push -f head_sha="$EXPECTED_DEV_SHA" \
+            -f status=success -f per_page=100 --paginate \
+            --jq '.workflow_runs[] | select(.name == "Build and Test" and .event == "push" and .head_branch == "dev" and .status == "completed" and .conclusion == "success") | [.id, .head_sha, .head_repository.full_name] | @tsv')
+          ci_verified=false
+          while IFS=$'\t' read -r run_id run_sha run_repo; do
+            [[ $run_id =~ ^[0-9]+$ && $run_sha == "$EXPECTED_DEV_SHA" && $run_repo == "$GH_REPO" ]] || continue
+            jobs_verified=$(gh api \
+              "repos/$GH_REPO/actions/runs/$run_id/jobs?filter=all&per_page=100" \
+              --paginate --slurp \
+              --jq '[.[].jobs[]] as $jobs | all(["Build and Test", "Windows x64 Bundled Tools"][]; . as $required | [$jobs[] | select(.name == $required)] | group_by(.run_attempt // 1) | (last // []) | length == 1 and all(.[]; .status == "completed" and .conclusion == "success"))')
+            if [[ $jobs_verified == true ]]; then
+              ci_verified=true
+              printf 'Linux/Windows CI 확인: https://github.com/%s/actions/runs/%s\n' "$GH_REPO" "$run_id"
+              break
+            fi
+          done <<< "$runs"
+          [[ $ci_verified == true ]] || {
+            echo '해당 dev SHA에 성공한 push/dev Build and Test 및 Linux/Windows 작업이 없습니다.' >&2
+            exit 1
+          }
+
+      - name: Atomically merge and tag main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          bash .github/scripts/promote-main.sh "$VERSION" "$EXPECTED_DEV_SHA"

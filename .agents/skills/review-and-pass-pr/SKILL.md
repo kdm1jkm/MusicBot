@@ -10,7 +10,7 @@ Read [GitHub state](../github-state-and-labels/SKILL.md), [spec management](../s
 
 ## 1. Claim and load context
 
-MUST verify live PR and linked Issue eligibility, labels, ownership and dependencies before claiming both with `agent:working`. A continuation of already-authorized implementation keeps its own claim and K counter. A PR without an Issue must be linked through authorized triage before active work. Read original intent/body, latest Canonical Spec Snapshot plus all subsequent Issue comments, PR discussion and review threads, CI check status, actual branch/diff against main/default branch, and finally the task file.
+MUST verify live PR and linked Issue eligibility, labels, ownership and dependencies before claiming both with `agent:working`. A continuation of already-authorized implementation keeps its own claim and repair history. A PR without an Issue must be linked through authorized triage before active work. Read original intent/body, latest Canonical Spec Snapshot plus subsequent Issue/PR comments, PR discussion and review threads, CI check status, actual branch/diff against main/default branch, and finally the task file.
 
 If `agent:passed` is still present, MUST NOT remove it or start rework merely because feedback appeared. Report that a human must explicitly remove PASS. Once a human removes it, the PR re-enters the Incomplete PR category (before actionable Issues, sorted by priority then FIFO) if otherwise eligible; selection and live claim still apply.
 
@@ -20,7 +20,7 @@ MUST link important Issue comments added since PR opening/update and summarize r
 
 ## 3. Repair, self-review, prepare final head
 
-MUST use TDD and existing verification tools to resolve feedback, failing checks and regressions. MUST track every repair against the same session K, never reset it on review entry. SHOULD perform self-review of the entire diff after fixes. At K unresolved repairs, stop and hand off per step 5.
+MUST use TDD and existing verification tools to resolve feedback, failing checks and regressions. MUST preserve diagnoses, changes and verification across repairs and follow the configured policy without a fixed iteration limit. SHOULD perform self-review of the entire diff after fixes. Continue actionable repairs; hand off per step 5 only when requested by the user or prevented by a genuine human/external prerequisite.
 
 MUST update task/handoff state and apply retention before finalizing commits. For clean-before-pass promote durable decisions/evidence and remove the task file; for local-only mirror essential state to GitHub. Push final commits, then verify exact final pushed head. If new edits are needed, refresh affected objective checks and independent review. Do not mark old evidence as validating a changed head.
 
@@ -41,11 +41,11 @@ MUST check every gate item:
 ## 5. Transition, report, STOP
 
 - On BOTH objective success AND independent review approval: MUST update PR description/evidence with final head, commands/results, CI links and reviewer record; add `agent:passed` to PR; remove own `agent:working` on PR and Issue; confirm remote label state; report PASS awaiting human merge; STOP. MUST NOT merge automatically.
-- On unresolved failures after K, or unavailable reviewer/checks/access: MUST record findings, attempted repairs, exact remaining actions and heads in task/PR handoff; preserve task file if completion cleanup did not finish; remove own working labels; leave PR unpassed. If external/human action is required, apply `agent:blocked` with reason/action in file and comment. Report and STOP.
+- On user-requested handoff or unavailable reviewer/checks/access: MUST record findings, attempted repairs, exact remaining actions and heads in task/PR handoff; preserve task file if completion cleanup did not finish; remove own working labels; leave PR unpassed. If external/human action is required, apply `agent:blocked` with reason/action in file and comment. Report and STOP. Ordinary actionable failures require continued repair, not handoff based on a repair count.
 - MUST NOT auto-start the next task on either outcome. Retention cleanup does not authorize deletion of unrelated files or suppression of unresolved findings.
 
 ## Self-Check
 
 - Current Issue/PR feedback and true final head considered, human-removed PASS handled correctly?
-- Same session K respected; objective checks AND independent quality review passed for final head?
+- Repair history preserved; objective checks AND independent quality review passed for final head?
 - PR evidence, retention and both working-label releases complete; human merge only; STOP?

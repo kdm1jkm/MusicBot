@@ -1,6 +1,6 @@
 ---
 name: tdd-and-verification
-description: Apply TDD, verify behavior and CI, bound repairs, and require independent PASS review.
+description: Apply TDD, verify behavior and CI, track evidence-driven repairs, and require independent PASS review.
 layer: capability
 ---
 
@@ -15,9 +15,9 @@ Read [config](../../config.md), [PASS gate](../../reference/workflow-model.md), 
 3. MUST use repository test/lint/typecheck/build commands recorded in config and existing CI conventions; MUST NOT add new frameworks without demonstrated need. For documentation-only or other non-executable criteria, record a concrete walkthrough/check and explain why an application test is inapplicable, rather than inventing a fake test.
 4. MUST exercise the changed runtime path with a smoke scenario where one exists; tests alone do not establish the actual UI/CLI behavior. Record commands, outcomes, relevant environment and commit; never claim an unexecuted check passed.
 
-## Bounded self-repair
+## Evidence-driven self-repair
 
-MUST read `K` (default 3) and track repairs across the session, including local, CI, and review failures. Initial verification is not a repair. On failure MAY perform up to K repair iterations, each with diagnosis, related fix, and rerun of affected checks. MUST NOT reset K by changing skills or starting review. At K unresolved attempts, stop repairing: record root cause, evidence and attempted fixes in the task file, sync reachable Git/PR state, release working labels, hand off, and STOP. Use blocked only for a real human/external dependency, not to hide an ordinary unresolved failure.
+MUST follow the configured repair policy and preserve repair history across local, CI, and review failures. There is no fixed iteration limit. Each repair MUST include diagnosis, a related fix, and affected verification; MUST NOT repeat an unchanged failing check without new evidence. Continue actionable repairs until acceptance criteria and verification pass. On a user-requested stop/handoff or genuine human/external prerequisite, record root cause, evidence, attempted fixes and exact next action, synchronize reachable Git/PR state, and release working labels. Use blocked only for a real human/external dependency, not to hide an ordinary unresolved failure.
 
 ## Dual PASS gate
 
@@ -30,4 +30,4 @@ MUST read `K` (default 3) and track repairs across the session, including local,
 
 - Acceptance Criteria have behavioral evidence; Red/Green or justified non-runtime walkthrough recorded?
 - Applicable commands and required CI pass at the final head, not merely a previous commit?
-- Independent review distinct from self-review; repair budget respected; no premature PASS?
+- Independent review distinct from self-review; repair history and evidence preserved; no premature PASS?
