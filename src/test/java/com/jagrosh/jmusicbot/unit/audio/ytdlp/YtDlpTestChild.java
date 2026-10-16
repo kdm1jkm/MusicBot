@@ -82,8 +82,9 @@ public final class YtDlpTestChild {
 
     static List<String> javaPrefix() {
         boolean windows = System.getProperty("os.name").startsWith("Windows");
+        // Match yt-dlp's UTF-8 protocol even on Windows hosts with a legacy console code page.
         return List.of(Path.of(System.getProperty("java.home"), "bin", windows ? "java.exe" : "java").toString(),
-                "-cp", System.getProperty("java.class.path"),
+                "-Dstdout.encoding=UTF-8", "-cp", System.getProperty("java.class.path"),
                 YtDlpTestChild.class.getName());
     }
 
