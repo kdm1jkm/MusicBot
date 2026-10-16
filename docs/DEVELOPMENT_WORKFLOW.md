@@ -43,6 +43,8 @@ git switch -c feature/my-new-feature
 
 JDK 25와 Gradle Wrapper 9.1.0을 사용합니다. Windows에서는 `./gradlew`를 `.\gradlew.bat`로 바꿉니다.
 
+Windows 프로세스 인자 경계 테스트는 기본 제공 Windows PowerShell 5.1을 실제 자식 실행기로 사용합니다. Java Windows launcher의 ANSI 인자 변환과 프로덕션 프로세스 경계를 분리하기 위한 fixture이며, 한글·공백·명령 주입 방지 assertion은 유지합니다. 나머지 Java 자식 fixture는 stdout을 UTF-8로 명시합니다.
+
 |검증|명령|
 |---|---|
 |전체 빌드·단위/통합 테스트·shaded JAR|`./gradlew --no-daemon build`|
