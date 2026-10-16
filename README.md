@@ -1,6 +1,9 @@
 <img align="right" src="https://i.imgur.com/zrE80HY.png" height="200" width="200">
 
 # JMusicBot
+
+**English** | [한국어](README.ko.md)
+
 > [!NOTE]
 > Independent fork maintained at [kdm1jkm/MusicBot](https://github.com/kdm1jkm/MusicBot), based on [arif-banai/MusicBot](https://github.com/arif-banai/MusicBot), which continued [jagrosh/MusicBot](https://github.com/jagrosh/MusicBot).
 > This fork uses its own version line, starting at **2610.1.0**, independently of upstream's 0.x releases. Original author and license attribution is preserved.
