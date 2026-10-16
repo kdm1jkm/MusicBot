@@ -114,7 +114,7 @@ tasks.withType(Test).configureEach {
 }
 
 tasks.named('test', Test) {
-    include '**/unit/**/*Test.class', '**/unit/**/*Tests.class'
+    include '**/unit/**/*Test.class', '**/unit/**/*Tests.class', '**/audio/*Test.class'
 }
 def integrationTest = tasks.register('integrationTest', Test) {
     description = 'Run integration tests using the shared test source set.'

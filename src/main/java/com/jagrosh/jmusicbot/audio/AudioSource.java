@@ -65,12 +65,15 @@ public enum AudioSource
         "YouTube videos and playlists",
         10,
         (manager, config) -> {
+            HttpHost proxy = config.proxyLavaplayer() && config.hasProxy()
+                    ? ProxyUtil.createApacheProxy(config) : null;
+            WebEmbeddedWithThumbnail embedded = proxy == null
+                    ? new WebEmbeddedWithThumbnail() : new ProxiedWebEmbeddedClient(proxy);
             YoutubeAudioSourceManager youtube = new YoutubeAudioSourceManager(
                     new MusicWithThumbnail(), new AndroidVrWithThumbnail(),
-                    new WebWithThumbnail(), new WebEmbeddedWithThumbnail());
+                    new WebWithThumbnail(), embedded);
             youtube.setPlaylistPageCount(config.getMaxYTPlaylistPages());
-            if (config.proxyLavaplayer() && config.hasProxy()) {
-                HttpHost proxy = ProxyUtil.createApacheProxy(config);
+            if (proxy != null) {
                 youtube.getHttpInterfaceManager().configureBuilder(builder -> builder.setProxy(proxy));
             }
             manager.registerSourceManager(youtube);

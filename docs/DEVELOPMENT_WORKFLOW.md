@@ -100,6 +100,7 @@ git checkout -b fix/bug-description
 - Coverage: `./gradlew jacocoTestReport jacocoIntegrationTestReport` writes `build/reports/jacoco/test/jacocoTestReport.xml` and `build/reports/jacoco/integrationTest/jacocoIntegrationTestReport.xml`.
 - Docker-pruned packaging: `./gradlew shadowJar -Pdocker -x test -x integrationTest` excludes native dependencies not needed in the container. YouTube uses the same embedded youtube-source backend on supported platforms.
 - YouTube uses the pinned `dev.lavalink.youtube:v2:1.18.2` Java dependency; packaging no longer downloads or embeds Windows yt-dlp/Deno executables.
+- youtube-source 1.18.2 creates a separate HTTP client for embedded-player host flags. `ProxiedWebEmbeddedClient` keeps that auxiliary request on the same configured audio proxy; the regular source HTTP manager alone does not cover it.
 - Test Docker build: `docker build -t jmusicbot:test .`
 - Verify the bot works as expected
 
