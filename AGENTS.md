@@ -22,7 +22,7 @@ Language: follow the Language policy in [config](.agents/config.md) (Korean for 
 | [github-state-and-labels](.agents/skills/github-state-and-labels/SKILL.md) | GitHub claims, labels, dependencies |
 | [spec-management](.agents/skills/spec-management/SKILL.md) | Canonical specs and controlled evolution |
 | [git-and-worktree](.agents/skills/git-and-worktree/SKILL.md) | Safe branches, worktrees, atomic commits |
-| [tdd-and-verification](.agents/skills/tdd-and-verification/SKILL.md) | TDD, bounded repair, independent PASS review |
+| [tdd-and-verification](.agents/skills/tdd-and-verification/SKILL.md) | TDD, evidence-driven repair without a fixed iteration limit, independent PASS review |
 | [task-file-and-handoff](.agents/skills/task-file-and-handoff/SKILL.md) | Task files and cross-session handoff |
 
 ## Repository paths and project conventions

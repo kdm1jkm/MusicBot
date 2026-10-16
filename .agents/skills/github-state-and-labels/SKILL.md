@@ -25,7 +25,7 @@ Read [workflow model](../../reference/workflow-model.md) and [configuration](../
 
 ## Transitions
 
-- MUST remove this session's `agent:working` from Issue and PR on normal handoff, completion, exhaustion of repair budget, or transition to `agent:blocked` / `agent:passed`.
+- MUST remove this session's `agent:working` from Issue and PR on authorized handoff, completion, or transition to `agent:blocked` / `agent:passed`.
 - MUST record blocker reason and exact human/external action in the task file and an Issue/PR comment when applying `agent:blocked`. Clear blocked state only after its reason is resolved and work is authorized.
 - MUST NOT remove `agent:passed` merely because a comment arrives. A human explicitly removes it for rework. Its absence makes a PR eligible again only if all other eligibility checks hold.
 - MUST add `agent:passed` only to a PR after the dual PASS gate; MUST NOT mark the Issue passed and strand it in a filtered state.

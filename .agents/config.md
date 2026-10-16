@@ -30,9 +30,9 @@ Descending: `P0`, `P1`, `P2`, then unlabeled. If multiple priority labels exist,
 
 Confirmed: `squash` for feature PRs into `dev`. Promotion from `dev` to `main` MUST use a merge commit and atomic push of its `vYYMM.major.minor` tag; never squash or rebase promotion. Humans merge feature PRs; PASS does not authorize agent merge.
 
-## Bounded self-repair limit
+## Self-repair policy
 
-`K = 3` repair iterations per session across local failures, CI failures, and review findings. Initial verification is not a repair. Do not reset the budget on tool, skill, or phase transitions. At exhaustion record evidence, release the claim, hand off, and stop.
+Confirmed: no fixed repair-iteration limit. Continue evidence-driven local, CI, and review repairs until the selected task satisfies its acceptance criteria, the user requests a stop/handoff, or a genuine human/external prerequisite prevents progress. Preserve repair history across skills and phases. Each repair requires diagnosis, a related change, and affected verification; do not repeat an unchanged failing check without new evidence. Verification requirements, independent review, claim safety, and human-only merge remain unchanged.
 
 ## Language policy
 
