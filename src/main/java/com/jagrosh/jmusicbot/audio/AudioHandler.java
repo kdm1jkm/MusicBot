@@ -326,23 +326,7 @@ public class AudioHandler extends AudioEventAdapter implements AudioSendHandler
             }
         }
         
-        // Special handling for YouTube OAuth errors
-        if (exception.getMessage().equals("Sign in to confirm you're not a bot")
-            || exception.getMessage().equals("Please sign in")
-            || exception.getMessage().equals("This video requires login."))
-        {
-            LOGGER.error(
-                    "Track {} has failed to play: {}. "
-                            + "You will need to sign in to Google to play YouTube tracks. "
-                            + "More info: https://jmusicbot.com/youtube-oauth2\n{}",
-                    track.getIdentifier(),
-                    exception.getMessage(),
-                    errorDetails.toString()
-            );
-        }
-        else {
-            LOGGER.error("Track {} has failed to play\n{}", track.getIdentifier(), errorDetails.toString(), exception);
-        }
+        LOGGER.error("Track {} has failed to play\n{}", track.getIdentifier(), errorDetails.toString(), exception);
     }
 
     @Override

@@ -1,6 +1,16 @@
 ﻿# Development Workflow
 
-This project follows a **trunk-based development** workflow. This document outlines the branch strategy, development practices, and CI/CD processes.
+This independent [kdm1jkm/MusicBot](https://github.com/kdm1jkm/MusicBot) fork follows a **trunk-based development** workflow. Its version line starts at **2610.1.0**, independently of upstream's 0.x releases.
+
+Clone this fork for development; keep upstream separate when importing changes:
+
+```bash
+git clone https://github.com/kdm1jkm/MusicBot.git
+cd MusicBot
+git remote add upstream https://github.com/arif-banai/MusicBot.git
+```
+
+`origin` is the publication target for this fork. Open pull requests and issues at `kdm1jkm/MusicBot`; preserve upstream author and license attribution when integrating changes.
 
 ## Branch Strategy
 
@@ -22,7 +32,7 @@ All feature work happens in short-lived branches that are merged back to `master
    - Use for: Adding new functionality, UI improvements, major enhancements
 
 2. **`fix/<slug>`** - Bug fixes
-   - Examples: `fix/youtube-oauth`, `fix/memory-leak`
+   - Examples: `fix/youtube-playback`, `fix/memory-leak`
    - Use for: Fixing bugs, resolving issues, patching vulnerabilities
 
 3. **`chore/<slug>`** - Maintenance tasks
@@ -30,11 +40,11 @@ All feature work happens in short-lived branches that are merged back to `master
    - Use for: Code cleanup, refactoring, dependency updates, documentation
 
 4. **`deps/<slug>`** - Dependency experiments
-   - Examples: `deps/youtube-source-pr195`, `deps/test-jda-6.4`
+   - Examples: `deps/update-yt-dlp`, `deps/test-jda-6.4`
    - Use for: Testing dependency updates, experimenting with forks, evaluating new libraries
 
 5. **`release/<version>`** - Release stabilization (optional)
-   - Examples: `release/0.6.3`, `release/0.6.3-rc1`
+   - Examples: `release/2610.1.0`, `release/2610.1.0-rc1`
    - Use for: Stabilizing a release, release candidates, hotfixes for specific versions
    - **Note**: Only create when you need to stabilize a release. Most releases can go directly from `master`
 
@@ -46,15 +56,15 @@ All feature work happens in short-lived branches that are merged back to `master
   - Descriptive and concise (e.g., `new-player-ui`, not `ui` or `new-feature`)
   - No underscores or special characters
 - **Examples**:
-  - Γ£à `feature/new-player-ui`
-  - Γ£à `fix/youtube-oauth-error`
-  - Γ£à `chore/update-maven-plugins`
-  - Γ£à `deps/test-lavaplayer-2.3`
-  - Γ£à `release/0.6.3`
-  - Γ¥î `feature/newFeature` (uppercase)
-  - Γ¥î `fix/bug_123` (underscore)
-  - Γ¥î `new-feature` (missing type prefix)
-  - Γ¥î `feature/new feature` (spaces)
+  - Valid: `feature/new-player-ui`
+  - Valid: `fix/youtube-playback`
+  - Valid: `chore/update-gradle-plugins`
+  - Valid: `deps/test-lavaplayer-2.3`
+  - Valid: `release/2610.1.0`
+  - Invalid: `feature/newFeature` (uppercase)
+  - Invalid: `fix/bug_123` (underscore)
+  - Invalid: `new-feature` (missing type prefix)
+  - Invalid: `feature/new feature` (spaces)
 
 ## Development Process
 
@@ -84,7 +94,12 @@ git checkout -b fix/bug-description
 
 ### 3. Testing Locally
 
-- Run tests: `mvn verify`
+- Use JDK 25 and the pinned Gradle 9.1.0 Wrapper; no global Gradle installation is required. On Windows, replace `./gradlew` with `.\gradlew.bat`.
+- Full build: `./gradlew --no-daemon build` runs unit tests (`test`), integration tests (`integrationTest`), and the shaded JAR task (`shadowJar`). The artifact is `build/libs/JMusicBot-2610.1.0-All.jar`.
+- Focused tasks: `./gradlew test`, `./gradlew integrationTest`, or `./gradlew shadowJar` (packaging only, without running tests).
+- Coverage: `./gradlew jacocoTestReport jacocoIntegrationTestReport` writes `build/reports/jacoco/test/jacocoTestReport.xml` and `build/reports/jacoco/integrationTest/jacocoIntegrationTestReport.xml`.
+- Docker-pruned packaging: `./gradlew shadowJar -Pdocker -x test -x integrationTest` excludes native dependencies not needed in the container. YouTube playback remains Windows x64 only.
+- Windows yt-dlp/Deno asset pins and checksum validation remain enforced during packaging; unavailable or corrupt assets fail the build.
 - Test Docker build: `docker build -t jmusicbot:test .`
 - Verify the bot works as expected
 
@@ -92,11 +107,8 @@ git checkout -b fix/bug-description
 
 - Push your branch: `git push origin feature/my-new-feature`
 - Create a PR targeting `master`
-- The CI will:
-  - Γ£à Validate branch naming
-  - Γ£à Run tests and build
-  - Γ£à Build Docker image (tagged with branch name)
-- Wait for CI to pass and code review
+- CI validates branch naming, then runs the build and tests for pull requests targeting `master`.
+- Wait for CI to pass and code review. Docker publication is separate from PR validation.
 
 ### 5. Merging
 
@@ -108,9 +120,7 @@ git checkout -b fix/bug-description
 
 ### Branch Validation
 
-The `validate-branch-naming.yml` workflow automatically validates branch names on:
-- Pull requests (when opened, updated, or edited)
-- Direct pushes to non-master branches
+The `validate-branch-naming.yml` workflow automatically validates branch names when a pull request is opened.
 
 **What it checks:**
 - Branch name matches allowed patterns
@@ -119,9 +129,7 @@ The `validate-branch-naming.yml` workflow automatically validates branch names o
 
 ### Build and Test
 
-The `build-and-test.yml` workflow runs on:
-- Pushes to `master` and all short-lived branches
-- Pull requests targeting `master`
+The `build-and-test.yml` workflow runs on pull requests targeting `master` and pushes to `master` (with path exclusions for documentation and repository metadata).
 
 **What it does:**
 - Compiles the project
@@ -129,17 +137,17 @@ The `build-and-test.yml` workflow runs on:
 - Generates code coverage reports
 - Uploads coverage to Codecov
 
-### Docker Build
+### Docker Publication
 
-The `docker-build.yml` workflow builds and publishes Docker images on:
-- Pushes to `master` ΓåÆ tags as `:latest` and version (if not SNAPSHOT)
-- Pushes to short-lived branches ΓåÆ tags as `:<branch-name>` (e.g., `:feature-new-player-ui`)
-- Version tags (e.g., `v0.6.3`) ΓåÆ tags as `:0.6.3`
+`docker-publish.yml` is configured to publish after successful `master` builds and on version tags (for example, `v2610.1.0`). `publish-preview-image.yml` can be dispatched manually for a selected ref. These workflows require package-write permissions and successful registry publication; their presence does not mean a public fork image already exists.
 
-**Image tags:**
-- `master`: `ghcr.io/arif-banai/musicbot:latest` (+ version tag if applicable)
-- Feature branch: `ghcr.io/arif-banai/musicbot:feature-new-player-ui`
-- Version tag: `ghcr.io/arif-banai/musicbot:0.6.3`
+Use a local build unless publication has been confirmed:
+
+```bash
+docker build -t jmusicbot:2610.1.0 .
+```
+
+See [README Docker setup](../README.md#docker) and [docker-compose.example.yml](../docker-compose.example.yml). Linux containers cannot run the Windows x64 bundled YouTube backend.
 
 ## Best Practices
 
@@ -185,22 +193,25 @@ The `docker-build.yml` workflow builds and publishes Docker images on:
    - No known critical bugs
    - Documentation updated
 
-2. **Update version in `pom.xml`**
-   - Set the release version (e.g., `0.6.3`)
-   - Commit: `git commit -m "chore: bump version to 0.6.3"`
+2. **Update version in `gradle.properties`** (manual release path; **Make Release** performs this itself)
+   - Set `version=2610.1.0` (or the intended release version), or run `./gradlew setVersion -PreleaseVersion=2610.1.0`.
+   - Read the current version with `./gradlew -q printVersion`.
+   - Commit: `git commit -am "chore: bump version to 2610.1.0"`
 
-3. **Create release tag**
+3. **For a manual release, build and create the tag** (skip this step when using **Make Release**)
    ```bash
-   git tag v0.6.3
-   git push origin v0.6.3
+   ./gradlew --no-daemon build
+   git tag v2610.1.0
+   git push origin v2610.1.0
    ```
 
-4. **Use "Make Release" workflow** (optional)
-   - Or manually create GitHub release
-   - Attach JAR file from workflow artifacts
+4. **Publish the release**
+   - Either run **Make Release** on `master` with version `2610.1.0` (it updates the version, builds, and prepares a draft release/tag), or create a release manually from the tag above. Use one path, not both for the same version.
+   - Attach `build/libs/JMusicBot-2610.1.0-All.jar`; retain the `All` classifier in the published filename.
+   - Review and publish the draft at [this fork's releases](https://github.com/kdm1jkm/MusicBot/releases).
+   - Preserve third-party notices and satisfy bundled yt-dlp GPLv3+ corresponding-source obligations; see [README](../README.md#bundled-youtube-playback-windows-x64).
 
-5. **Docker image is automatically built** from the tag
-   - Tagged as `ghcr.io/arif-banai/musicbot:0.6.3`
+5. **Check Docker publication separately**, if enabled; do not advertise a registry tag until it is successfully published and accessible.
 
 ### Release Branch (for stabilization)
 
@@ -208,8 +219,8 @@ Only use if you need to stabilize a release while continuing development:
 
 1. **Create release branch**
    ```bash
-   git checkout -b release/0.6.3
-   git push origin release/0.6.3
+   git checkout -b release/2610.1.0
+   git push origin release/2610.1.0
    ```
 
 2. **Stabilize on release branch**
@@ -219,8 +230,8 @@ Only use if you need to stabilize a release while continuing development:
 
 3. **Tag from release branch**
    ```bash
-   git tag v0.6.3
-   git push origin v0.6.3
+   git tag v2610.1.0
+   git push origin v2610.1.0
    ```
 
 4. **Merge back to master** (if needed)
@@ -257,12 +268,12 @@ Only use if you need to stabilize a release while continuing development:
 1. Create `fix/<description>` branch from `master`
 2. Fix the issue
 3. Create PR and merge quickly
-4. Tag a new patch version (e.g., `v0.6.3` ΓåÆ `v0.6.4`)
+4. Tag the next fork release version and publish its release notes and `All.jar` artifact.
 
 ## Summary
 
 - **Trunk**: `master` is always releasable
 - **Branches**: Short-lived, type-prefixed (`feature/`, `fix/`, `chore/`, `deps/`, `release/`)
-- **Process**: Branch ΓåÆ Develop ΓåÆ Test ΓåÆ PR ΓåÆ Merge ΓåÆ Release
-- **CI**: Automatic validation, testing, and Docker builds
+- **Process**: Branch -> Develop -> Test -> PR -> Merge -> Release
+- **CI**: Automatic validation and testing; Docker publication requires separate successful registry access
 - **Goal**: Fast, safe, continuous integration and deployment

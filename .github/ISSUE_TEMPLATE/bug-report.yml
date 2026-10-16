@@ -49,16 +49,16 @@ body:
       label: Checklist
       description: Before submitting your issue, please affirm the following
       options:
-        - label: I have looked for information about this [within the documentation](https://jmusicbot.com/)
+        - label: I have checked [this fork's documentation](https://github.com/kdm1jkm/MusicBot/blob/master/README.md)
           required: true
-        - label: I have searched for similar issues [on the issues page](https://github.com/arif-banai/MusicBot/issues?q=is%3Aissue)
+        - label: I have searched for similar issues [in this fork](https://github.com/kdm1jkm/MusicBot/issues?q=is%3Aissue)
           required: true
-        - label: I am using an official release from [the releases page](https://github.com/arif-banai/MusicBot/releases)
+        - label: I am reporting a problem with kdm1jkm/MusicBot and have included my fork release version or source commit below
           required: true
   - type: input
     id: version
     attributes:
-      label: JMusicBot Version
-      description: Which version of JMusicBot are you running?
+      label: Fork Version or Commit
+      description: Which kdm1jkm/MusicBot release (for example, 2610.1.0) or source commit are you running? Releases are available at https://github.com/kdm1jkm/MusicBot/releases.
     validations:
       required: true

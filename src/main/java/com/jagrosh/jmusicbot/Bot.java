@@ -30,7 +30,6 @@ import com.jagrosh.jmusicbot.settings.SettingsManager;
 import com.jagrosh.jmusicbot.service.MusicService;
 import com.jagrosh.jmusicbot.service.SearchService;
 import com.jagrosh.jmusicbot.utils.InstanceLock;
-import com.jagrosh.jmusicbot.utils.YoutubeOauth2TokenHandler;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
@@ -56,7 +55,6 @@ public class Bot
     private final AloneInVoiceHandler aloneInVoiceHandler;
     private final MusicService musicService;
     private final SearchService searchService;
-    private final YoutubeOauth2TokenHandler youTubeOauth2TokenHandler;
     private final UserInteraction userInteraction;
     private final Instant startTime;
     private final AudioLoadWrapper audioLoadWrapper;
@@ -75,8 +73,6 @@ public class Bot
         this.playlists = new PlaylistLoader(config);
         this.threadpool = Executors.newSingleThreadScheduledExecutor();
         this.startTime = Instant.now();
-        this.youTubeOauth2TokenHandler = new YoutubeOauth2TokenHandler();
-        this.youTubeOauth2TokenHandler.init();
         this.players = new PlayerManager(this);
         // Delay init of the PlayerManager until the GUI has started
         // this.players.init();
@@ -259,9 +255,6 @@ public class Bot
         return commandClient;
     }
 
-    public YoutubeOauth2TokenHandler getYouTubeOauth2Handler() {
-        return youTubeOauth2TokenHandler;
-    }
     
     public Instant getStartTime() {
         return startTime;

@@ -15,9 +15,6 @@
  */
 package com.jagrosh.jmusicbot.audio;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -33,20 +30,10 @@ import com.sedmelluq.discord.lavaplayer.source.nico.NicoAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
-import dev.lavalink.youtube.YoutubeAudioSourceManager;
-import dev.lavalink.youtube.YoutubeSourceOptions;
-import dev.lavalink.youtube.clients.AndroidVrWithThumbnail;
-import dev.lavalink.youtube.clients.ClientOptions;
-import dev.lavalink.youtube.clients.MWebWithThumbnail;
-import dev.lavalink.youtube.clients.Tv;
-import dev.lavalink.youtube.clients.TvHtml5SimplyWithThumbnail;
-import dev.lavalink.youtube.clients.WebWithThumbnail;
-import dev.lavalink.youtube.clients.skeleton.Client;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.jagrosh.jmusicbot.audio.ytdlp.YtDlpAudioSourceManager;
 
 import com.jagrosh.jmusicbot.BotConfig;
-import com.jagrosh.jmusicbot.utils.OtherUtil;
+import com.jagrosh.jmusicbot.utils.ProxyUtil;
 
 /**
  * Enum representing available audio sources that can be listed in the config file.
@@ -72,10 +59,9 @@ public enum AudioSource
         "youtube",
         "YouTube videos and playlists",
         10,
-        (manager, config) -> {
-            YoutubeAudioSourceManager yt = setupYoutubeAudioSourceManager(config);
-            manager.registerSourceManager(yt);
-        }
+        (manager, config) -> manager.registerSourceManager(new YtDlpAudioSourceManager(
+                config.getMaxYTPlaylistPages(), config.getYouTubeCookiesFile(),
+                config.proxyLavaplayer() && config.hasProxy() ? ProxyUtil.createApacheProxy(config) : null))
     ),
     SOUNDCLOUD(
         "soundcloud",
@@ -221,134 +207,4 @@ public enum AudioSource
         registrationAction.accept(manager, config);
     }
     
-    /**
-     * Sets up and configures a YouTube audio source manager.
-     * 
-     * @param config the bot configuration
-     * @return the configured YouTube audio source manager
-     */
-    private static YoutubeAudioSourceManager setupYoutubeAudioSourceManager(BotConfig config)
-    {
-        final Logger logger = LoggerFactory.getLogger(AudioSource.class);
-        
-        boolean useOauth = config.useYouTubeOauth();
-        YoutubeSourceOptions options = buildYoutubeOptions(config);
-        Client[] clients = buildYoutubeClients(useOauth);
-
-        YoutubeAudioSourceManager yt = new YoutubeAudioSourceManager(options, clients);
-        yt.setPlaylistPageCount(config.getMaxYTPlaylistPages());
-
-        if (useOauth)
-        {
-            applyOAuth(yt, logger);
-        }
-        return yt;
-    }
-    
-    /**
-     * Builds YouTube source options.
-     */
-    private static YoutubeSourceOptions buildYoutubeOptions(BotConfig config)
-    {
-        YoutubeSourceOptions options = new YoutubeSourceOptions()
-                .setAllowSearch(true)
-                .setAllowDirectVideoIds(true)
-                .setAllowDirectPlaylistIds(true);
-        
-        if (config.useYouTubeOauth())
-        {
-            options.setRemoteCipher("https://cipher.kikkia.dev/", null, "jmusicbot");
-        }
-        
-        return options;
-    }
-    
-    /**
-     * Builds the appropriate YouTube clients based on OAuth setting.
-     * 
-     * <p>When OAuth is enabled, we use a combination of clients:
-     * <ul>
-     *   <li><b>AndroidVrWithThumbnail</b> - Metadata loading (non-embedded, non-OAuth)</li>
-     *   <li><b>MWebWithThumbnail</b> - Metadata loading (non-embedded, non-OAuth)</li>
-     *   <li><b>Web</b> - Metadata loading (non-embedded, non-OAuth)</li>
-     *   <li><b>Tv</b> - OAuth-compatible streaming-only client. Used as fallback for loading
-     *       audio stream formats during playback.</li>
-     *   <li><b>TvHtml5SimplyWithThumbnail</b> - *Not oAuth compatible* Used as fallback for loading
-     *       audio stream formats during playback.</li>
-     * </ul>
-     * 
-     * <p>
-     */
-    private static Client[] buildYoutubeClients(boolean useOauth)
-    {
-        if (useOauth)
-        {
-            // Clients configured for metadata loading only (no playback/streaming)
-            // This handles direct URLs without embedded player restrictions
-            ClientOptions metadataOnly = new ClientOptions();
-            metadataOnly.setPlayback(false);
-            
-            return new Client[] {
-                new AndroidVrWithThumbnail(metadataOnly), // metadata loading (non-embedded, non-OAuth)
-                new MWebWithThumbnail(metadataOnly),      // metadata loading (non-embedded, non-OAuth)
-                new WebWithThumbnail(metadataOnly),       // metadata loading (non-embedded, non-OAuth)
-                new Tv(),
-                new TvHtml5SimplyWithThumbnail()
-            };
-        }
-        // Clients are required even without OAuth to properly handle YouTube URLs
-        return new Client[] {
-            new AndroidVrWithThumbnail(),
-            new MWebWithThumbnail(),
-            new WebWithThumbnail(),
-            new TvHtml5SimplyWithThumbnail() 
-        };
-    }
-    
-    /**
-     * Reads OAuth token and applies it to the YouTube source manager.
-     * If no token exists, triggers the OAuth device flow to obtain one.
-     */
-    private static void applyOAuth(YoutubeAudioSourceManager yt, Logger logger)
-    {
-        String token = readOAuthToken(logger);
-        if (token != null)
-        {
-            logger.debug("Read YouTube OAuth2 refresh token from youtubetoken.txt");
-        }
-        
-        try
-        {
-            // Call useOauth2 with null token to trigger the device flow.
-            // When token is null, this initiates the OAuth device code flow which
-            // logs the authorization URL and code that YoutubeOauth2TokenHandler captures.
-            yt.useOauth2(token, false);
-        }
-        catch (Exception e)
-        {
-            logger.warn("Failed to authorise with YouTube. If this issue persists, delete the youtubetoken.txt file to reauthorise.", e);
-        }
-    }
-    
-    /**
-     * Reads the OAuth token from file.
-     * 
-     * @return the token, or null if file doesn't exist or read failed
-     */
-    private static String readOAuthToken(Logger logger)
-    {
-        try
-        {
-            return Files.readString(OtherUtil.getPath("youtubetoken.txt"));
-        }
-        catch (NoSuchFileException e)
-        {
-            return null;
-        }
-        catch (IOException e)
-        {
-            logger.warn("Failed to read YouTube OAuth2 token file: {}", e.getMessage());
-            return null;
-        }
-    }
 }

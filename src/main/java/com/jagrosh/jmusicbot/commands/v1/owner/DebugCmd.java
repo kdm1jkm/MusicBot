@@ -15,7 +15,6 @@
  */
 package com.jagrosh.jmusicbot.commands.v1.owner;
 
-import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -163,7 +162,9 @@ public class DebugCmd extends OwnerCommand
                 .collect(Collectors.joining(", "));
         sb.append("  Disabled: ").append(disabled.isEmpty() ? "none" : disabled).append("\n");
         
-        sb.append("  YouTube OAuth: ").append(formatYouTubeOAuthStatus(config)).append("\n");
+        sb.append("  YouTube backend: bundled yt-dlp (Windows x64)\n");
+        sb.append("  YouTube cookies: ").append(config.getYouTubeCookiesFile() == null || config.getYouTubeCookiesFile().isBlank()
+                ? "not configured" : "configured").append("\n");
     }
     
     private void appendPlaylistsSection(StringBuilder sb)
@@ -293,14 +294,6 @@ public class DebugCmd extends OwnerCommand
         return sb.toString();
     }
     
-    private String formatYouTubeOAuthStatus(BotConfig config)
-    {
-        if (!config.useYouTubeOauth())
-            return "disabled";
-        
-        boolean tokenExists = Files.exists(OtherUtil.getPath("youtubetoken.txt"));
-        return "enabled (" + (tokenExists ? "token present" : "no token") + ")";
-    }
     
     private String formatNumber(long number)
     {

@@ -65,7 +65,7 @@ class ConfigMigrationIntegrationTest extends BaseConfigTest {
             
             // Verify migration occurred
             assertTrue(merged.hasPath("meta.configVersion"));
-            assertEquals(2, merged.getInt("meta.configVersion"));
+            assertEquals(3, merged.getInt("meta.configVersion"));
             
             // Verify values migrated correctly
             assertEquals("integration_test_token", merged.getString("discord.token"));
@@ -131,7 +131,8 @@ class ConfigMigrationIntegrationTest extends BaseConfigTest {
             assertTrue(merged.getBoolean("voice.stayInChannel"));
             assertEquals(3600L, merged.getLong("playback.maxTrackSeconds"));
             assertEquals(20, merged.getInt("playback.maxYouTubePlaylistPages"));
-            assertTrue(merged.getBoolean("playback.youtube.useOAuth"));
+            assertFalse(merged.hasPath("playback.youtube.useOAuth"));
+            assertEquals("", merged.getString("playback.youtube.cookiesFile"));
             assertEquals(300L, merged.getLong("voice.aloneTimeUntilStopSeconds"));
             assertEquals("CustomPlaylists", merged.getString("paths.playlistsFolder"));
             assertFalse(merged.getBoolean("updates.alerts"));

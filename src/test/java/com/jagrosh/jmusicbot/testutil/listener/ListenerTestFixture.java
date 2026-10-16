@@ -27,7 +27,6 @@ import com.jagrosh.jmusicbot.service.MusicService;
 import com.jagrosh.jmusicbot.settings.Settings;
 import com.jagrosh.jmusicbot.settings.SettingsManager;
 import com.jagrosh.jmusicbot.testutil.TestConstants;
-import com.jagrosh.jmusicbot.utils.YoutubeOauth2TokenHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
@@ -36,7 +35,6 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.SelfMember;
 import net.dv8tion.jda.api.entities.SelfUser;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
@@ -49,7 +47,6 @@ import net.dv8tion.jda.api.events.session.SessionDisconnectEvent;
 import net.dv8tion.jda.api.events.session.ShutdownEvent;
 import net.dv8tion.jda.api.requests.CloseCode;
 import net.dv8tion.jda.api.managers.AudioManager;
-import net.dv8tion.jda.api.requests.restaction.CacheRestAction;
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import net.dv8tion.jda.api.utils.cache.SnowflakeCacheView;
 
@@ -76,7 +73,6 @@ public class ListenerTestFixture
     private final MusicService musicService;
     private final CommandClient commandClient;
     private final ScheduledExecutorService threadpool;
-    private final YoutubeOauth2TokenHandler youtubeOauth2TokenHandler;
     private final UserInteraction userInteraction;
 
     // JDA mocks
@@ -140,7 +136,6 @@ public class ListenerTestFixture
         musicService = mock(MusicService.class);
         commandClient = mock(CommandClient.class);
         threadpool = mock(ScheduledExecutorService.class);
-        youtubeOauth2TokenHandler = mock(YoutubeOauth2TokenHandler.class);
         userInteraction = mock(UserInteraction.class);
 
         // JDA mocks
@@ -194,7 +189,6 @@ public class ListenerTestFixture
         when(bot.getCommandClient()).thenReturn(commandClient);
         when(bot.getThreadpool()).thenReturn(threadpool);
         when(bot.getJDA()).thenReturn(jda);
-        when(bot.getYouTubeOauth2Handler()).thenReturn(youtubeOauth2TokenHandler);
         when(bot.getUserInteraction()).thenReturn(userInteraction);
 
         // Settings relationships
@@ -237,7 +231,7 @@ public class ListenerTestFixture
         // Config defaults
         when(config.getOwnerId()).thenReturn(OWNER_ID);
         when(config.useUpdateAlerts()).thenReturn(false);
-        when(config.useYouTubeOauth()).thenReturn(false);
+        when(config.getYouTubeCookiesFile()).thenReturn("");
         when(config.getDBots()).thenReturn(false);
 
         // Settings defaults
@@ -304,25 +298,6 @@ public class ListenerTestFixture
         return this;
     }
 
-    /**
-     * Configures YouTube OAuth to be enabled.
-     */
-    public ListenerTestFixture withYouTubeOauth()
-    {
-        when(config.useYouTubeOauth()).thenReturn(true);
-        YoutubeOauth2TokenHandler.Data oauthData = mock(YoutubeOauth2TokenHandler.Data.class);
-        when(oauthData.getAuthorisationUrl()).thenReturn("https://example.com/auth");
-        when(oauthData.getCode()).thenReturn("TEST-CODE");
-        when(youtubeOauth2TokenHandler.getData()).thenReturn(oauthData);
-        
-        // Mock private channel for owner
-        CacheRestAction<PrivateChannel> privateChannelAction = mock(CacheRestAction.class);
-        PrivateChannel privateChannel = mock(PrivateChannel.class);
-        when(jda.openPrivateChannelById(OWNER_ID)).thenReturn(privateChannelAction);
-        when(privateChannelAction.complete()).thenReturn(privateChannel);
-        
-        return this;
-    }
 
     /**
      * Configures a default playlist for the guild.

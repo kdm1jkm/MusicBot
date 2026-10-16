@@ -1,0 +1,258 @@
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.security.MessageDigest
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
+import org.gradle.api.tasks.testing.Test
+import org.gradle.testing.jacoco.tasks.JacocoReport
+
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'com.gradleup.shadow' version '9.2.2'
+}
+
+group = 'io.github.kdm1jkm'
+description = 'Independently maintained JMusicBot fork with bundled Windows x64 YouTube playback'
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(25) }
+}
+
+repositories {
+    mavenCentral()
+    maven { url = uri('https://m2.chew.pro/releases') }
+    maven { url = uri('https://maven.lavalink.dev/releases') }
+    maven { url = uri('https://m2.dv8tion.net/releases') }
+    maven { url = uri('https://jitpack.io') }
+}
+
+def dockerBuild = providers.gradleProperty('docker').isPresent()
+def jdavePlatforms = dockerBuild ? ['linux-x86-64', 'linux-aarch64'] :
+        ['linux-x86-64', 'linux-aarch64', 'win-x86-64', 'darwin']
+def udpqueuePlatforms = dockerBuild ? ['linux-x86-64', 'linux-aarch64'] :
+        ['linux-x86-64', 'linux-x86', 'linux-aarch64', 'linux-arm', 'linux-musl-x86-64',
+         'linux-musl-aarch64', 'win-x86-64', 'win-x86', 'win-aarch64', 'darwin']
+
+dependencies {
+    implementation enforcedPlatform('com.fasterxml.jackson:jackson-bom:2.20.1')
+    implementation 'net.dv8tion:JDA:6.4.2'
+    implementation('pw.chew:jda-chewtils:2.2.1') {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib'
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-common'
+        exclude group: 'com.squareup.okhttp3', module: 'okhttp'
+        exclude group: 'com.squareup.okio', module: 'okio'
+    }
+    implementation 'club.minnced:jdave-api:0.1.7'
+    implementation 'club.minnced:udpqueue-api:0.2.12'
+    jdavePlatforms.each { runtimeOnly "club.minnced:jdave-native-${it}:0.1.7" }
+    udpqueuePlatforms.each { runtimeOnly "club.minnced:udpqueue-native-${it}:0.2.12" }
+    implementation 'dev.arbjerg:lavaplayer:2.2.7'
+    implementation 'ch.qos.logback:logback-classic:1.5.25'
+    implementation 'com.typesafe:config:1.4.3'
+    implementation 'org.jsoup:jsoup:1.22.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.formdev:flatlaf:3.7'
+    implementation 'com.formdev:flatlaf-extras:3.7'
+
+    // Preserve the dependency alignment previously used by the application.
+    constraints {
+        implementation('org.slf4j:slf4j-api') { version { strictly '2.0.17' } }
+        implementation('org.jetbrains.kotlin:kotlin-stdlib') { version { strictly '2.2.21' } }
+        implementation('org.jetbrains:annotations') { version { strictly '24.0.0' } }
+        implementation('org.json:json') { version { strictly '20240303' } }
+        implementation('org.mozilla:rhino-engine') { version { strictly '1.7.15' } }
+        implementation('dev.arbjerg:lava-common') { version { strictly '2.2.7' } }
+    }
+
+    testImplementation platform('org.junit:junit-bom:5.14.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.mockito:mockito-core:5.21.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.21.0'
+    testImplementation 'org.hamcrest:hamcrest-core:3.0'
+    testImplementation 'com.squareup.okhttp3:mockwebserver:5.3.2'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+    options.encoding = 'UTF-8'
+    options.compilerArgs.addAll(['-Xlint:deprecation'])
+}
+
+def youtubeAssets = [
+    ytdlp: [version: providers.gradleProperty('bundledYtdlpVersion').get(),
+            sha256: providers.gradleProperty('bundledYtdlpSha256').get(), filename: 'yt-dlp.exe'],
+    deno: [version: providers.gradleProperty('bundledDenoVersion').get(),
+           sha256: providers.gradleProperty('bundledDenoSha256').get(), filename: 'deno.zip']
+]
+youtubeAssets.ytdlp.url = "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/${youtubeAssets.ytdlp.version}/yt-dlp.exe"
+youtubeAssets.deno.url = "https://github.com/denoland/deno/releases/download/v${youtubeAssets.deno.version}/deno-x86_64-pc-windows-msvc.zip"
+
+def bundleYoutubeTools = tasks.register('bundleYoutubeTools') {
+    group = 'build'
+    description = 'Download and verify pinned Windows tools and generate embedded resources.'
+    inputs.properties(youtubeAssets.collectEntries { name, asset -> [(name): asset.toString()] })
+    def generated = layout.buildDirectory.dir('generated-resources')
+    outputs.dir(generated)
+    // Recheck cached executables on every build, including when generated resources already exist.
+    outputs.upToDateWhen { false }
+    doLast {
+        def checksum = { File file ->
+            def digest = MessageDigest.getInstance('SHA-256')
+            file.withInputStream { stream ->
+                byte[] buffer = new byte[65536]
+                int count
+                while ((count = stream.read(buffer)) != -1) digest.update(buffer, 0, count)
+            }
+            HexFormat.of().formatHex(digest.digest())
+        }
+        File output = generated.get().dir('ytdlp/windows-x86_64').asFile
+        Files.createDirectories(output.toPath())
+        youtubeAssets.each { name, asset ->
+            File cached = layout.buildDirectory.file("bundled-tools/${name}-${asset.version}/${asset.filename}").get().asFile
+            Files.createDirectories(cached.parentFile.toPath())
+            if (!cached.exists()) {
+                def temporary = Files.createTempFile(cached.parentFile.toPath(), asset.filename, '.download')
+                try {
+                    logger.lifecycle("Downloading pinned ${name} ${asset.version}")
+                    def connection = URI.create(asset.url).toURL().openConnection()
+                    connection.connectTimeout = 30000
+                    connection.readTimeout = 300000
+                    connection.setRequestProperty('User-Agent', 'JMusicBot-Gradle-Build')
+                    connection.inputStream.withCloseable { stream -> Files.copy(stream, temporary, StandardCopyOption.REPLACE_EXISTING) }
+                    if (checksum(temporary.toFile()) != asset.sha256)
+                        throw new GradleException("Downloaded ${name} checksum mismatch; no binary was published.")
+                    Files.move(temporary, cached.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                } finally { Files.deleteIfExists(temporary) }
+            }
+            if (checksum(cached) != asset.sha256)
+                throw new GradleException("Cached ${name} checksum mismatch. Delete ${cached} and rebuild.")
+            Files.copy(cached.toPath(), new File(output, asset.filename).toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
+        new File(output, 'tools.properties').setText(youtubeAssets.collect { name, asset ->
+            "${name}.version=${asset.version}\n${name}.sha256=${asset.sha256}\n"
+        }.join(''), 'UTF-8')
+    }
+}
+sourceSets.main.resources.srcDir(bundleYoutubeTools)
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+tasks.named('jar') {
+    manifest.attributes(
+        'Main-Class': 'com.jagrosh.jmusicbot.JMusicBot',
+        'Specification-Title': project.name,
+        'Specification-Version': project.version,
+        'Implementation-Title': project.name,
+        'Implementation-Version': project.version,
+        'Implementation-Vendor-Id': project.group
+    )
+}
+
+tasks.named('shadowJar') {
+    archiveClassifier = 'All'
+    // Keep native/GUI/reflection resources; no minimization or relocation.
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    filesMatching(['reference.conf', 'META-INF/services/**']) { duplicatesStrategy = DuplicatesStrategy.INCLUDE }
+    append('reference.conf')
+    mergeServiceFiles()
+    exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA', 'module-info.class', 'META-INF/versions/**/module-info.class'
+}
+tasks.named('assemble') { dependsOn tasks.named('shadowJar') }
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    maxHeapSize = '1g'
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
+    // Gradle isolates tests in a worker ClassLoader. Java subprocess fixtures need the real test classpath.
+    doFirst { systemProperty 'java.class.path', sourceSets.test.runtimeClasspath.asPath }
+    testLogging { events 'failed', 'skipped'; exceptionFormat = 'full' }
+}
+
+tasks.named('test', Test) {
+    include '**/unit/**/*Test.class', '**/unit/**/*Tests.class', '**/audio/ytdlp/*Test.class'
+}
+def integrationTest = tasks.register('integrationTest', Test) {
+    description = 'Run integration tests using the shared test source set.'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    include '**/integration/**/*Test.class', '**/integration/**/*Tests.class', '**/integration/**/*IT.class'
+    shouldRunAfter tasks.named('test')
+}
+tasks.register('e2eTest', Test) {
+    description = 'Run opt-in end-to-end tests.'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    include '**/e2e/**/*Test.class', '**/e2e/**/*Tests.class', '**/e2e/**/*IT.class'
+    failOnNoDiscoveredTests = false
+    shouldRunAfter integrationTest
+}
+tasks.named('check') { dependsOn integrationTest }
+
+jacoco { toolVersion = '0.8.14' }
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+    reports { xml.required = true; html.required = true }
+}
+tasks.register('jacocoIntegrationTestReport', JacocoReport) {
+    dependsOn integrationTest
+    executionData integrationTest.get()
+    sourceSets sourceSets.main
+    reports {
+        xml.required = true
+        xml.outputLocation = layout.buildDirectory.file('reports/jacoco/integrationTest/jacocoIntegrationTestReport.xml')
+        html.required = true
+        html.outputLocation = layout.buildDirectory.dir('reports/jacoco/integrationTest/html')
+    }
+}
+
+// Expensive quality checks remain opt-in, as with the retired build profiles.
+if (providers.gradleProperty('checkstyle').isPresent()) {
+    apply plugin: 'checkstyle'
+    checkstyle {
+        toolVersion = '10.26.1'
+        config = resources.text.fromArchiveEntry(configurations.checkstyle.find { it.name.startsWith('checkstyle-') }, 'google_checks.xml')
+    }
+}
+if (providers.gradleProperty('spotbugs').isPresent()) {
+    configurations { spotbugsTool }
+    dependencies { spotbugsTool 'com.github.spotbugs:spotbugs:4.9.8' }
+    def spotbugs = tasks.register('spotbugsMain', JavaExec) {
+        group = 'verification'
+        dependsOn tasks.named('classes')
+        classpath = configurations.spotbugsTool
+        mainClass = 'edu.umd.cs.findbugs.LaunchAppropriateUI'
+        doFirst {
+            def report = layout.buildDirectory.file('reports/spotbugs/main.html').get().asFile
+            report.parentFile.mkdirs()
+            args '-textui', '-exitcode', '-html', '-output', report.absolutePath,
+                 '-auxclasspath', sourceSets.main.compileClasspath.asPath
+            args sourceSets.main.output.classesDirs.files.collect { it.absolutePath }
+        }
+    }
+    tasks.named('check') { dependsOn spotbugs }
+}
+
+tasks.register('printVersion') { doLast { println project.version } }
+tasks.register('setVersion') {
+    description = 'Update the release version in gradle.properties using -PreleaseVersion=... .'
+    doLast {
+        String releaseVersion = providers.gradleProperty('releaseVersion').orNull
+        if (releaseVersion == null || !(releaseVersion ==~ /[0-9]+\.[0-9]+\.[0-9]+(?:[-.][A-Za-z0-9.-]+)?/))
+            throw new GradleException('Supply -PreleaseVersion=<major.minor.patch[-suffix]>.')
+        File properties = file('gradle.properties')
+        properties.setText(properties.getText('UTF-8').replaceFirst(/(?m)^version=.*$/, "version=${releaseVersion}"), 'UTF-8')
+    }
+}
+
+tasks.named('wrapper') {
+    gradleVersion = '9.1.0'
+    distributionType = Wrapper.DistributionType.BIN
+    distributionSha256Sum = 'a17ddd85a26b6a7f5ddb71ff8b05fc5104c0202c6e64782429790c933686c806'
+}

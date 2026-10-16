@@ -1,0 +1,78 @@
+BUNDLED YT-DLP WINDOWS X64 DISTRIBUTION
+
+This JAR redistributes the unmodified official yt-dlp standalone executable
+as a separate subprocess program. It includes Python, PyInstaller bootloader
+files, third-party Python/native libraries and bundled EJS scripts. These
+components are NOT covered by JMusicBot's Apache-2.0 project license.
+
+Version: yt-dlp nightly 2026.10.10.233141
+Binary: https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.10.10.233141/yt-dlp.exe
+Binary SHA-256: e7cafc44db8aa433da8dd78303b9157f2c1dd509c4cbfcd8418081b7e1d26a7a
+Release: https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/tag/2026.10.10.233141
+Source revision: 897341241f2bfb2439fe0367f4c7c9ccd29a3828
+Source tree: https://github.com/yt-dlp/yt-dlp/tree/897341241f2bfb2439fe0367f4c7c9ccd29a3828
+Release source archive (includes EJS): https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.10.10.233141/yt-dlp.tar.gz
+Release source archive SHA-256: f983c6d3ded7148de5b8b22a7db41e12cef05f38f1b5396985d969593efad059
+
+LICENSES
+
+Upstream explicitly licenses the PyInstaller-bundled combined executable
+under GNU GPL version 3 or later. The yt-dlp source alone is Unlicense; that
+is NOT the license of the standalone combined executable.
+Upstream declaration: https://github.com/yt-dlp/yt-dlp/blob/897341241f2bfb2439fe0367f4c7c9ccd29a3828/README.md#licensing
+
+LICENSE.txt is the exact yt-dlp source Unlicense notice.
+THIRD_PARTY_LICENSES.txt is the complete upstream aggregated third-party
+license material at the source revision above, including the GPLv3 text,
+Python/PSF, Microsoft Windows distributable-code conditions, GPL/LGPL,
+MPL, native-library, dependency and EJS/Meriyah/Astring license texts.
+It is retained intact; some upstream-listed libraries apply only to other
+platform builds, as indicated within that file.
+PYINSTALLER_COPYING.txt is the exact PyInstaller 6.22.0 copyright, GPLv2+
+terms, bootloader exception and runtime-hook licensing notice. PyInstaller's
+bootloader exception must not be confused with the licensing of other
+components in the combined executable.
+
+CORRESPONDING SOURCE AND BUILD PROVENANCE
+
+For the GPL-covered combined executable, recipients may access the source
+without charge using the pinned source locations below and the complete
+pinned dependency source inventory in COMPONENT_SOURCES.txt. Source access
+includes the upstream build instructions/scripts and versioned dependencies,
+not merely yt-dlp's Unlicense source. No component was modified by JMusicBot.
+
+UPSTREAM_BUILD_WORKFLOW.txt preserves the upstream build workflow at the
+pinned yt-dlp revision. Its windows/x64 job uses Python 3.10, installs the
+hash-pinned build and runtime requirements, updates the release version,
+generates lazy extractors, then invokes python -m bundle.pyinstaller.
+Full scripts: https://github.com/yt-dlp/yt-dlp/tree/897341241f2bfb2439fe0367f4c7c9ccd29a3828/bundle
+Release preparation: https://github.com/yt-dlp/yt-dlp/tree/897341241f2bfb2439fe0367f4c7c9ccd29a3828/devscripts
+WINDOWS_BUILD_REQUIREMENTS.txt and WINDOWS_RUNTIME_REQUIREMENTS.txt preserve
+the exact upstream requirement versions, package hashes and platform selectors.
+COMPONENT_SOURCES.txt provides versioned source archives and SHA-256 values
+for those runtime dependencies (including GPL-covered mutagen 1.48.1 and
+EJS 0.8.0). Source packages include their own license and build material.
+Python source releases: https://www.python.org/downloads/source/
+
+Pinned PyInstaller build release: https://github.com/yt-dlp/Pyinstaller-Builds/releases/tag/2026.08.19.215425
+PyInstaller source revision: 70fc17210920bce17f4ab09bbf8104b0dbd45338
+PyInstaller source: https://github.com/pyinstaller/pyinstaller/tree/70fc17210920bce17f4ab09bbf8104b0dbd45338
+PyInstaller source archive: https://github.com/pyinstaller/pyinstaller/archive/70fc17210920bce17f4ab09bbf8104b0dbd45338.tar.gz
+PyInstaller bootloader build instructions: https://github.com/pyinstaller/pyinstaller/blob/70fc17210920bce17f4ab09bbf8104b0dbd45338/doc/bootloader-building.rst
+Pinned PyInstaller wheel: https://github.com/yt-dlp/Pyinstaller-Builds/releases/download/2026.08.19.215425/pyinstaller-6.22.0-py3-none-win_amd64.whl
+Pinned PyInstaller wheel SHA-256: 294099ecb5fdd2a13ae4c29006d4e335b697a63b6a16cf052b90ec2b40bef05a
+
+Native-library source project locations and any upstream source-provision
+contact are preserved in THIRD_PARTY_LICENSES.txt. In particular, upstream
+states that if bundled third-party source cannot be obtained, its maintainers
+will provide it per their license obligation at maintainers@yt-dlp.org. This
+is an upstream statement, not a written source offer made by JMusicBot.
+
+Redistributors must retain these notices and satisfy the applicable GPL
+corresponding-source access obligations (including GPLv3 section 6 when
+conveying object code). Source downloads on upstream servers are identified
+here alongside the binary. Redistributors remain responsible for equivalent
+source access for the required period and must host corresponding source if
+these upstream locations cease to supply it; an unavailable URL or a license
+notice alone does not satisfy that obligation. This notice does not impose
+JMusicBot's Apache license on the bundled programs or replace their licenses.

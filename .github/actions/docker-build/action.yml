@@ -8,17 +8,13 @@ inputs:
   annotations:
     description: 'OCI annotations from metadata-action (for multi-arch images)'
     required: true
-  timestamp:
-    description: 'Build timestamp in ISO 8601 format'
-    required: true
   registry:
     description: 'Container registry (e.g., ghcr.io)'
     required: false
     default: 'ghcr.io'
   image-name:
-    description: 'Image name (e.g., arif-banai/musicbot)'
-    required: false
-    default: 'arif-banai/musicbot'
+    description: 'Lowercase repository image name (e.g., kdm1jkm/musicbot)'
+    required: true
   token:
     description: 'GitHub token for authentication'
     required: true
@@ -63,8 +59,6 @@ runs:
           type=gha,mode=max
           type=registry,ref=${{ inputs.registry }}/${{ inputs.image-name }}:buildcache,mode=max
         platforms: linux/amd64,linux/arm64
-        build-args: |
-          BUILD_TIMESTAMP=${{ inputs.timestamp }}
 
     - name: Image digest
       shell: bash

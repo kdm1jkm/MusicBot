@@ -185,11 +185,6 @@ public class LegacyToV1 implements Migration {
         if (source.hasPath("skipratio")) {
             playback.put("skipRatio", source.getDouble("skipratio"));
         }
-        if (source.hasPath("useyoutubeoauth")) {
-            Map<String, Object> youtube = new HashMap<>();
-            youtube.put("useOAuth", source.getBoolean("useyoutubeoauth"));
-            playback.put("youtube", youtube);
-        }
         
         Map<String, Boolean> audioSourcesMap = migrateAudioSources(source);
         if (!audioSourcesMap.isEmpty()) {

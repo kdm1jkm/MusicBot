@@ -14,7 +14,7 @@ on:
         required: false
         type: string
       run_tests:
-        description: 'Run Maven tests before building Docker image'
+        description: 'Run Gradle tests before building Docker image'
         required: false
         type: boolean
         default: true
@@ -26,7 +26,6 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: arif-banai/musicbot
 
 jobs:
   publish-preview:
@@ -44,34 +43,31 @@ jobs:
           ref: ${{ github.event.inputs.ref }}
           fetch-depth: 0  # Full history needed for git commands
 
-      - name: Extract metadata
-        id: metadata
-        run: |
-          # Extract project version from pom.xml
-          VERSION=$(grep -m 1 '<version>' pom.xml | sed 's/.*<version>\([^<]*\)<\/version>.*/\1/' | tr -d ' ')
-          SHA_SHORT=$(git rev-parse --short HEAD)
-          TIMESTAMP=$(git log -1 --format=%cI)
-          
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "sha=$SHA_SHORT" >> "$GITHUB_OUTPUT"
-          echo "timestamp=$TIMESTAMP" >> "$GITHUB_OUTPUT"
-          echo "Extracted version: $VERSION, SHA: $SHA_SHORT"
-
       - name: Set up Java Environment
-        # Run if run_tests is true (default) or explicitly set to true
-        if: ${{ github.event.inputs.run_tests != 'false' }}
         uses: actions/setup-java@v5
         with:
           java-version: '25'
           distribution: 'temurin'
-          cache: maven
 
-      - name: Run Maven tests
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Extract metadata
+        id: metadata
+        run: |
+          chmod +x gradlew
+          VERSION=$(./gradlew --no-daemon -q printVersion)
+          SHA_SHORT=$(git rev-parse --short HEAD)
+          
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA_SHORT" >> "$GITHUB_OUTPUT"
+          echo "image_name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          echo "Extracted version: $VERSION, SHA: $SHA_SHORT"
+
+      - name: Run Gradle tests
         # Run if run_tests is true (default) or explicitly set to true
         if: ${{ github.event.inputs.run_tests != 'false' }}
-        run: |
-          COMMIT_TIME=$(git log -1 --format=%cI)
-          mvn --batch-mode verify -Pdocker -Dproject.build.outputTimestamp=$COMMIT_TIME
+        run: ./gradlew --no-daemon build -Pdocker
 
       - name: Sanitize tag suffix
         id: sanitize
@@ -103,15 +99,17 @@ jobs:
           # GitHub Packages reads annotations from the index level for multi-arch images
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ steps.metadata.outputs.image_name }}
           # Tag rules for preview images:
           # - preview-<sanitized-ref> tag
           # - sha-<short> immutable tag
           tags: |
             type=raw,value=preview-${{ steps.sanitize.outputs.suffix }}
             type=raw,value=sha-${{ steps.metadata.outputs.sha }}
-          # Labels are automatically generated from git context by metadata-action
-          # No need to specify them - metadata-action will create standard OCI labels
+          # The application is Apache-2.0; the distribution includes separately licensed components.
+          labels: |
+            org.opencontainers.image.description=Independent JMusicBot fork; Docker supports non-YouTube sources only (bundled yt-dlp requires Windows x64)
+            org.opencontainers.image.licenses=NOASSERTION
 
       - name: Build and push Docker image
         id: build
@@ -119,9 +117,8 @@ jobs:
         with:
           tags: ${{ steps.meta.outputs.tags }}
           annotations: ${{ steps.meta.outputs.annotations }}
-          timestamp: ${{ steps.metadata.outputs.timestamp }}
           registry: ${{ env.REGISTRY }}
-          image-name: ${{ env.IMAGE_NAME }}
+          image-name: ${{ steps.metadata.outputs.image_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Print final tags

@@ -2,31 +2,21 @@
 
 # Multi-stage build for JMusicBot
 # Stage 1: Build the application
-FROM maven:3.9.12-eclipse-temurin-25-alpine AS builder
-
-ARG BUILD_TIMESTAMP
-ENV BUILD_TIMESTAMP=$BUILD_TIMESTAMP
+FROM eclipse-temurin:25-jdk-noble AS builder
 
 WORKDIR /build
 
-# Copy pom.xml first for better layer caching
-COPY --link pom.xml .
-
-# Download dependencies with BuildKit cache mount for Maven repository
-# This significantly speeds up builds by persisting dependencies between builds
-RUN --mount=type=cache,target=/root/.m2/repository \
-    mvn dependency:go-offline -B -Pdocker
+# Copy Gradle build files and the pinned Wrapper
+COPY --link build.gradle settings.gradle gradle.properties ./
+COPY --link gradle ./gradle
+COPY --link --chmod=755 gradlew ./
 
 # Copy source code
 COPY --link src ./src
 
-# Build the application with BuildKit cache mount
-RUN --mount=type=cache,target=/root/.m2/repository \
-    if [ -n "$BUILD_TIMESTAMP" ]; then \
-      mvn clean package -DskipTests -B -Pdocker -Dproject.build.outputTimestamp="$BUILD_TIMESTAMP"; \
-    else \
-      mvn clean package -DskipTests -B -Pdocker; \
-    fi
+# Cache Gradle dependencies and build the Docker-pruned shaded JAR
+RUN --mount=type=cache,target=/root/.gradle \
+    ./gradlew --no-daemon shadowJar -Pdocker -x test -x integrationTest
 
 
 # Stage 2: Create custom minimal JRE using jlink
@@ -63,12 +53,13 @@ RUN $JAVA_HOME/bin/jlink \
 FROM bitnami/minideb:trixie
 
 # OCI image labels for better traceability and management
+# The application is Apache-2.0; bundled dependencies and the runtime have separate licenses.
 LABEL org.opencontainers.image.title="JMusicBot" \
-      org.opencontainers.image.description="A cross-platform Discord music bot with a clean interface" \
-      org.opencontainers.image.url="https://jmusicbot.com" \
-      org.opencontainers.image.source="https://github.com/arif-banai/MusicBot" \
-      org.opencontainers.image.vendor="JMusicBot" \
-      org.opencontainers.image.licenses="Apache-2.0"
+      org.opencontainers.image.description="Independent JMusicBot fork; Docker supports non-YouTube sources only (bundled yt-dlp requires Windows x64)" \
+      org.opencontainers.image.url="https://github.com/kdm1jkm/MusicBot" \
+      org.opencontainers.image.source="https://github.com/kdm1jkm/MusicBot" \
+      org.opencontainers.image.vendor="kdm1jkm" \
+      org.opencontainers.image.licenses="NOASSERTION"
 
 # Copy custom JRE from jre-builder stage
 ENV JAVA_HOME=/opt/java/openjdk
@@ -82,7 +73,7 @@ RUN groupadd --gid 10001 jmusicbot && \
     chown -R jmusicbot:jmusicbot /app /musicbot
 
 # Copy the built JAR from builder stage
-COPY --from=builder --chown=jmusicbot:jmusicbot /build/target/JMusicBot-*-All.jar /app/app.jar
+COPY --from=builder --chown=jmusicbot:jmusicbot /build/build/libs/JMusicBot-*-All.jar /app/app.jar
 
 # Copy and set permissions for entrypoint script
 COPY --chown=jmusicbot:jmusicbot --chmod=755 docker/entrypoint.sh /app/entrypoint.sh

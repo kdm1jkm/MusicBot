@@ -6,44 +6,33 @@ jobs:
       - image: cimg/openjdk:25.0
     working_directory: ~/repo
     environment:
-      MAVEN_OPTS: -Xmx3200m
+      GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx3200m
     steps:
       - checkout
 
-      # Restore Maven cache
+      # Restore Gradle dependencies and Wrapper distributions
       - restore_cache:
           keys:
-            - v2-m2-{{ checksum "pom.xml" }}
-            - v2-m2-
+            - v1-gradle-{{ checksum "build.gradle" }}-{{ checksum "gradle.properties" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+            - v1-gradle-
 
-      # Download deps (good for warm cache; safe to keep)
+      # Build the shaded JAR and run unit and integration tests
       - run:
-          name: Maven go-offline
-          command: mvn -B -ntp dependency:go-offline
-
-      # Build + run unit tests + integration tests (Failsafe) if configured
-      - run:
-          name: Maven verify
-          command: mvn -B -ntp verify
-
-      # Save Maven cache
-      - save_cache:
-          key: v2-m2-{{ checksum "pom.xml" }}
-          paths:
-            - ~/.m2
-
-      # Collect test reports if present (doesn't fail if empty)
-      # Note: failsafe-reports contains failsafe-summary.xml which is not JUnit format,
-      # so we copy only the actual test result files (TEST-*.xml) to a clean directory
-      - run:
-          name: Uploading test results
-          when: always
+          name: Gradle build
           command: |
-            mkdir -p target/test-results/surefire target/test-results/failsafe
-            cp target/surefire-reports/TEST-*.xml target/test-results/surefire/ 2>/dev/null || true
-            cp target/failsafe-reports/TEST-*.xml target/test-results/failsafe/ 2>/dev/null || true
+            chmod +x gradlew
+            ./gradlew --no-daemon build
+
+      # Save Gradle dependencies and Wrapper distributions
+      - save_cache:
+          key: v1-gradle-{{ checksum "build.gradle" }}-{{ checksum "gradle.properties" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+          paths:
+            - ~/.gradle/caches
+            - ~/.gradle/wrapper
+
+      # Both Gradle test tasks emit JUnit XML beneath this directory
       - store_test_results:
-          path: target/test-results
+          path: build/test-results
 
 workflows:
   build:

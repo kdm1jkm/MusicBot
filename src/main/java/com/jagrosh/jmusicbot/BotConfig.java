@@ -60,8 +60,8 @@ public class BotConfig {
     private Path path = null;
     private String token, prefix, altprefix, helpWord, playlistsFolder, logLevel,
             successEmoji, warningEmoji, errorEmoji, loadingEmoji, searchingEmoji,
-            evalEngine, guiTheme;
-    private boolean stayInChannel, songInGame, npImages, npMinimalMessage, npShowButtons, showNpProgressBar, updatealerts, useEval, dbots, useYouTubeOauth, guiEnabled;
+            evalEngine, guiTheme, youTubeCookiesFile;
+    private boolean stayInChannel, songInGame, npImages, npMinimalMessage, npShowButtons, showNpProgressBar, updatealerts, useEval, dbots, guiEnabled;
     private long owner, maxSeconds, aloneTimeUntilStop;
     private long clearChannelAgeDays;
     private int maxYTPlaylistPages, maxHistorySize, guiFontSize, nasBufferMs, frameBufferMs, proxyPort, clearChannelDeleteLimit;
@@ -268,7 +268,7 @@ public class BotConfig {
         maxSeconds = MAX_SECONDS.getLong(config);
         maxYTPlaylistPages = MAX_YT_PLAYLIST_PAGES.getInt(config);
         maxHistorySize = MAX_HISTORY_SIZE.getInt(config);
-        useYouTubeOauth = USE_YOUTUBE_OAUTH.getBoolean(config);
+        youTubeCookiesFile = YOUTUBE_COOKIES_FILE.getString(config);
         aloneTimeUntilStop = ALONE_TIME_UNTIL_STOP.getLong(config);
         playlistsFolder = PLAYLISTS_FOLDER.getString(config);
         aliases = ALIASES.getConfig(config);
@@ -516,8 +516,8 @@ public class BotConfig {
         return maxHistorySize;
     }
 
-    public boolean useYouTubeOauth() {
-        return useYouTubeOauth;
+    public String getYouTubeCookiesFile() {
+        return youTubeCookiesFile;
     }
 
     public String getMaxTime() {

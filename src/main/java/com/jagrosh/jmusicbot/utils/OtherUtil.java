@@ -51,7 +51,7 @@ public class OtherUtil
     public final static String NEW_VERSION_AVAILABLE = "There is a new version of JMusicBot available!\n"
                     + "Current version: %s\n"
                     + "New Version: %s\n\n"
-                    + "Please visit https://github.com/arif-banai/MusicBot/releases/latest to get the latest release.";
+                    + "Please visit https://github.com/kdm1jkm/MusicBot/releases/latest to get the latest release.";
     private final static String WINDOWS_INVALID_PATH = "c:\\windows\\system32\\";
     
     /**
@@ -179,7 +179,7 @@ public class OtherUtil
     
     public static String getLatestVersion()
     {
-        return getLatestVersion("https://api.github.com/repos/arif-banai/MusicBot", null);
+        return getLatestVersion("https://api.github.com/repos/kdm1jkm/MusicBot", null);
     }
     
     /**
@@ -194,14 +194,14 @@ public class OtherUtil
         if (config != null && config.proxyGithub() && config.hasProxy()) {
             proxy = ProxyUtil.createProxy(config);
         }
-        return getLatestVersion("https://api.github.com/repos/arif-banai/MusicBot", proxy);
+        return getLatestVersion("https://api.github.com/repos/kdm1jkm/MusicBot", proxy);
     }
     
     /**
      * Gets the latest non-prerelease version from GitHub releases API.
      * This method is public to allow testing with mock servers.
      * 
-     * @param baseUrl the base URL for the GitHub API (e.g., "https://api.github.com/repos/arif-banai/MusicBot")
+     * @param baseUrl the base URL for the GitHub API (e.g., "https://api.github.com/repos/kdm1jkm/MusicBot")
      * @return the latest non-prerelease version tag (without 'v' prefix), or null if not found
      */
     public static String getLatestVersion(String baseUrl)
@@ -213,7 +213,7 @@ public class OtherUtil
      * Gets the latest non-prerelease version from GitHub releases API with optional proxy support.
      * This method is public to allow testing with mock servers.
      * 
-     * @param baseUrl the base URL for the GitHub API (e.g., "https://api.github.com/repos/arif-banai/MusicBot")
+     * @param baseUrl the base URL for the GitHub API (e.g., "https://api.github.com/repos/kdm1jkm/MusicBot")
      * @param proxy the proxy to use for HTTP requests (may be null)
      * @return the latest non-prerelease version tag (without 'v' prefix), or null if not found
      */

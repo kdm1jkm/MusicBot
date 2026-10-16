@@ -19,13 +19,17 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.typesafe.config.Config;
-import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.PatternSyntaxException;
@@ -35,7 +39,7 @@ import java.util.stream.Collectors;
  *
  * @author John Grosh (john.a.grosh@gmail.com)
  */
-public class TransformativeAudioSourceManager extends YoutubeAudioSourceManager
+public class TransformativeAudioSourceManager implements AudioSourceManager
 {
     private final static Logger log = LoggerFactory.getLogger(TransformativeAudioSourceManager.class);
     private final String name, regex, replacement, selector, format;
@@ -71,7 +75,7 @@ public class TransformativeAudioSourceManager extends YoutubeAudioSourceManager
             Document doc = Jsoup.connect(url).get();
             String value = doc.selectFirst(selector).ownText();
             String formattedValue = String.format(format, value);
-            return super.loadItem(apm, new AudioReference(formattedValue, null));
+            return formattedValue.equals(ar.identifier) ? null : new AudioReference(formattedValue, null);
         }
         catch (PatternSyntaxException ex)
         {
@@ -86,6 +90,26 @@ public class TransformativeAudioSourceManager extends YoutubeAudioSourceManager
             log.warn(String.format("Exception in source '%s'", name), ex);
         }
         return null;
+    }
+
+    @Override
+    public boolean isTrackEncodable(AudioTrack track) {
+        return false;
+    }
+
+    @Override
+    public void encodeTrack(AudioTrack track, DataOutput output) {
+        throw new UnsupportedOperationException("Transforms do not create tracks.");
+    }
+
+    @Override
+    public AudioTrack decodeTrack(AudioTrackInfo info, DataInput input) {
+        return null;
+    }
+
+    @Override
+    public void shutdown() {
+        // No owned resources.
     }
     
     public static List<TransformativeAudioSourceManager> createTransforms(Config transforms)

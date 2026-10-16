@@ -149,10 +149,10 @@ class ConfigLoaderTest extends BaseConfigTest {
                 .withToken("test_token")
                 .build();
             
-            // Create defaults that claim version 3 (no migration path exists for 2->3)
-            // Migration will succeed for 0->1 and 1->2, then fail for 2->3
+            // Create defaults that claim version 4 (no migration path exists for 3->4)
+            // Migration will succeed through version 3, then fail for 3->4.
             Config defaults = V1ConfigBuilder.create()
-                .withMetaVersion(3)
+                .withMetaVersion(4)
                 .build();
             
             // Should throw ConfigMigrationException, not swallow it
@@ -194,7 +194,7 @@ class ConfigLoaderTest extends BaseConfigTest {
             // The merged config should have values from defaults (reference.conf)
             // Verify it has the expected structure from v1 format
             assertTrue(merged.hasPath("meta.configVersion"));
-            assertEquals(2, merged.getInt("meta.configVersion"));
+            assertEquals(3, merged.getInt("meta.configVersion"));
         }
         
         @Test
@@ -230,7 +230,7 @@ class ConfigLoaderTest extends BaseConfigTest {
                 .withMetaVersion(3)
                 .build();
             
-            // Defaults have version 2 (the actual latest)
+            // Defaults intentionally claim version 2 for this relative-version test.
             Config defaults = V1ConfigBuilder.create()
                 .withMetaVersion(2)
                 .build();

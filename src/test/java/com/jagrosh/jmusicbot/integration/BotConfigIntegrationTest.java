@@ -64,7 +64,7 @@ class BotConfigIntegrationTest extends BaseConfigTest {
                 voice.stayInChannel = true
                 playback.maxTrackSeconds = 3600
                 playback.maxYouTubePlaylistPages = 20
-                playback.youtube.useOAuth = true
+                playback.youtube.cookiesFile = "cookies/local.txt"
                 voice.aloneTimeUntilStopSeconds = 300
                 paths.playlistsFolder = CustomPlaylists
                 updates.alerts = false
@@ -96,6 +96,7 @@ class BotConfigIntegrationTest extends BaseConfigTest {
             assertEquals("??", config.getAltPrefix());
             assertTrue(config.getSongInStatus());
             assertEquals(20, config.getMaxYTPlaylistPages());
+            assertEquals("cookies/local.txt", config.getYouTubeCookiesFile());
         }
         
         @Test

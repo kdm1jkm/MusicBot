@@ -1,5 +1,6 @@
-# Build artifacts (Maven will rebuild these)
-target/
+# Build artifacts (Gradle will rebuild these)
+build/
+.gradle/
 
 # Version control
 .git/
@@ -47,9 +48,6 @@ scripts/
 *.sh
 !docker/entrypoint.sh
 
-# Maven files
-dependency-reduced-pom.xml
-.mvn/
 
 # OS files
 .DS_Store

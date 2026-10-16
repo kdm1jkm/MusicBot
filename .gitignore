@@ -1,9 +1,13 @@
 /nbproject/
+/build/
+/.gradle/
+# Ignore local artifacts from builds made before the Gradle migration.
 /target/
 /Playlists/
 /test/
 *.json
 *.txt
+!/src/main/resources/META-INF/third-party/**/*.txt
 nb*.xml
 
 # IDEs
@@ -13,8 +17,6 @@ nb*.xml
 *.iml
 *.iws
 
-# Maven
-dependency-reduced-pom.xml
 
 # OS
 .DS_Store

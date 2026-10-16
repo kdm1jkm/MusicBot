@@ -399,11 +399,5 @@ public class BotTest
             assertNotNull(bot.getThreadpool());
         }
 
-        @Test
-        @DisplayName("getYouTubeOauth2Handler() returns handler instance")
-        void getYouTubeOauth2Handler_returnsHandler()
-        {
-            assertNotNull(bot.getYouTubeOauth2Handler());
-        }
     }
 }

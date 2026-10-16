@@ -2,19 +2,16 @@
 
 # JMusicBot
 > [!NOTE]
-> This is a fork of [JMusicBot](https://github.com/jagrosh/MusicBot) from jagrosh
-> I started this because it was not maintained and was not working anymore.
+> Independent fork maintained at [kdm1jkm/MusicBot](https://github.com/kdm1jkm/MusicBot), based on [arif-banai/MusicBot](https://github.com/arif-banai/MusicBot), which continued [jagrosh/MusicBot](https://github.com/jagrosh/MusicBot).
+> This fork uses its own version line, starting at **2610.1.0**, independently of upstream's 0.x releases. Original author and license attribution is preserved.
 
-[![Downloads](https://img.shields.io/github/downloads/arif-banai/MusicBot/total.svg)](https://github.com/arif-banai/MusicBot/releases/latest)
-[![Stars](https://img.shields.io/github/stars/arif-banai/MusicBot.svg)](https://github.com/arif-banai/MusicBot/stargazers)
-[![Release](https://img.shields.io/github/release/arif-banai/MusicBot.svg)](https://github.com/arif-banai/MusicBot/releases/latest)
-[![License](https://img.shields.io/github/license/arif-banai/MusicBot.svg)](https://github.com/arif-banai/MusicBot/blob/master/LICENSE)
-[![Discord](https://discordapp.com/api/guilds/1453856673004392634/widget.png?v=1)](https://discord.gg/cyyUxNmmx6) <br>
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/arif-banai/MusicBot/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/arif-banai/MusicBot/tree/master)
-[![Build and Test](https://github.com/arif-banai/MusicBot/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/arif-banai/MusicBot/actions/workflows/build-and-test.yml)
-[![CodeFactor](https://www.codefactor.io/repository/github/arif-banai/musicbot/badge)](https://www.codefactor.io/repository/github/arif-banai/musicbot)
+[![Downloads](https://img.shields.io/github/downloads/kdm1jkm/MusicBot/total.svg)](https://github.com/kdm1jkm/MusicBot/releases/latest)
+[![Stars](https://img.shields.io/github/stars/kdm1jkm/MusicBot.svg)](https://github.com/kdm1jkm/MusicBot/stargazers)
+[![Release](https://img.shields.io/github/release/kdm1jkm/MusicBot.svg)](https://github.com/kdm1jkm/MusicBot/releases/latest)
+[![License](https://img.shields.io/github/license/kdm1jkm/MusicBot.svg)](https://github.com/kdm1jkm/MusicBot/blob/master/LICENSE)
+[![Build and Test](https://github.com/kdm1jkm/MusicBot/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/kdm1jkm/MusicBot/actions/workflows/build-and-test.yml)
 
-A cross-platform Discord music bot with a clean interface, and that is easy to set up and run yourself!
+A Discord music bot with a clean interface. Most sources are cross-platform; the bundled YouTube backend requires Windows x64.
 
 ## ⚠️ Check your Java Version and other requirements
 
@@ -27,8 +24,6 @@ This version of JMusicBot changes/updates various dependencies. To ensure your b
     *   *Navigate to: Your Application > Bot > Privileged Gateway Intents > Toggle "Message Content Intent" to ON.*
     *   *Without this, the bot will not see your commands.*
 
-
-[![Setup](http://i.imgur.com/VvXYp5j.png)](https://jmusicbot.com/setup)
 
 ## Features
   * Easy to run (just make sure Java is installed, and run!)
@@ -45,7 +40,7 @@ This version of JMusicBot changes/updates various dependencies. To ensure your b
 ## Supported sources and formats
 JMusicBot supports all sources and formats supported by [lavaplayer](https://github.com/lavalink-devs/lavaplayer#supported-formats):
 ### Sources
-  * YouTube
+  * YouTube (Windows x64, bundled yt-dlp)
   * SoundCloud
   * Bandcamp
   * Vimeo
@@ -66,7 +61,22 @@ JMusicBot supports all sources and formats supported by [lavaplayer](https://git
 ![Loading Example...](https://i.imgur.com/kVtTKvS.gif)
 
 ## Setup
-Please see the [Setup Page](https://jmusicbot.com/setup) to run this bot yourself!
+
+1. Install **Java 25 or newer** (`java -version`). For YouTube playback, use **Windows x64**; Linux also requires the native libraries described [below](#linux-system-requirements).
+2. Download `JMusicBot-2610.1.0-All.jar` from this fork's [releases](https://github.com/kdm1jkm/MusicBot/releases), or build it with the Gradle Wrapper as described below. Put it in a dedicated bot directory.
+3. In the [Discord Developer Portal](https://discord.com/developers/applications), create an application and bot, obtain its **bot token**, and enable **Message Content Intent** on the Bot page. Keep the token private. On OAuth2's URL Generator, select `bot` and `applications.commands`, grant the bot permissions to view/send messages and connect/speak in your music channels, then open the generated URL to invite it to your server.
+4. Enable Discord's **User Settings > Advanced > Developer Mode**, then right-click your own profile and choose **Copy User ID**. This is the owner ID, not the application or server ID.
+5. Copy [src/main/resources/reference.conf](src/main/resources/reference.conf) to `config.txt` in the bot directory and set the required fields:
+
+   ```hocon
+   discord {
+     token = "YOUR_BOT_TOKEN"
+     owner = 123456789012345678
+   }
+   ```
+
+   Keep the other defaults unless needed. On Linux, macOS, or Docker, also set `playback.audioSources.youtube = false`. Never commit `config.txt` or share its token.
+6. Run the command below **from that directory**. Configuration and playlists are relative to the working directory. In Discord, use `/help` or mention the bot followed by `help`.
 
 ## Running Directly (Without Docker)
 
@@ -74,16 +84,35 @@ When running JMusicBot directly (not in Docker), make sure to pass these JVM fla
 
 **Linux / macOS / Windows (CMD):**
 ```bash
-java -Dfile.encoding=UTF-8 -Dnogui=true --enable-native-access=ALL-UNNAMED -jar JMusicBot-0.6.2-All.jar
+java -Dfile.encoding=UTF-8 -Dnogui=true --enable-native-access=ALL-UNNAMED -jar JMusicBot-2610.1.0-All.jar
 ```
 
 **Windows (PowerShell):** PowerShell treats `-D` as its own parameter. Quote each JVM option so they are passed to `java` correctly:
 ```powershell
-java "-Dfile.encoding=UTF-8" "-Dnogui=true" "--enable-native-access=ALL-UNNAMED" "-jar" ".\JMusicBot-0.6.2-All.jar"
+java "-Dfile.encoding=UTF-8" "-Dnogui=true" "--enable-native-access=ALL-UNNAMED" "-jar" ".\JMusicBot-2610.1.0-All.jar"
 ```
 Alternatively, use the stop-parsing token so the rest of the line is passed literally: `java --% -Dfile.encoding=UTF-8 -Dnogui=true ...`
 
 `-Dfile.encoding=UTF-8` ensures non-English characters (Cyrillic, Japanese, etc.) display correctly in Discord. On Windows or older JDKs, omitting it can cause mojibake in slash-command autocomplete and embeds.
+
+### Bundled YouTube playback (Windows x64)
+
+Use `JMusicBot-2610.1.0-All.jar` with Java 25 or newer. The single JAR contains pinned yt-dlp, its EJS scripts, and Deno. No separate Python, yt-dlp, Deno, or FFmpeg installation is needed; no tools are downloaded at first run. Tools are checksum-verified and extracted into a private temporary directory when YouTube is first used, then removed on shutdown. The JAR directory can be read-only; the system temporary directory must permit executable extraction and launch.
+
+YouTube loading, search, playlists, seeking, and repeat use stable public video URLs; a fresh, accessibility-checked media URL is resolved immediately before playback. VOD uses WebM/Opus or M4A/AAC; live playback supports MPEG-TS or packed-AAC HLS and is not seekable. Other unsupported containers fail explicitly. YouTube playback is unavailable on Linux, macOS, and Docker; other enabled sources remain usable.
+
+Anonymous public playback is the default. If YouTube requires account authentication or rejects your IP, supply a valid, locally exported **Netscape-format** cookies file in the GUI's optional YouTube cookies field or configuration:
+
+```hocon
+playback.youtube.cookiesFile = "C:/MusicBot/youtube-cookies.txt"
+```
+
+Relative paths resolve from the bot working directory. A configured file must be readable; it is copied privately for each operation, never rewritten by the bot. The bot does not read browser profiles or export credentials. Keep cookie files private and out of source control. Account use carries rate-limit/ban risk; see [yt-dlp's YouTube cookie guidance](https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies). Bundling tools cannot override private-video, account, or network restrictions.
+
+Configuration migrates automatically to version 3. The retired YouTube OAuth/cipher setting and backend are removed; existing `youtubetoken.txt` files are left untouched but are no longer used.
+
+`./gradlew --no-daemon build` (Windows: `.\gradlew.bat --no-daemon build`) uses the pinned Gradle 9.1.0 Wrapper with JDK 25, runs unit and integration tests, and produces `build/libs/JMusicBot-2610.1.0-All.jar`. No global Gradle installation is needed; the version is set in `gradle.properties`. The build downloads checksum-pinned Windows assets and embeds them in the shaded `All.jar`; builds fail if assets are unavailable or corrupt. yt-dlp nightly `2026.10.10.233141` and Deno `2.9.7` are pinned; upgrading requires changing the build pins and checksums together, not runtime self-update. Bundled programs have their own licenses, including GPLv3+ terms for the standalone yt-dlp distribution. Notices and corresponding-source/build provenance are inside `META-INF/third-party/ytdlp/` and `META-INF/third-party/deno/`; redistributors must preserve notices and satisfy the applicable source-access obligations.
+
 
 ### Linux System Requirements
 
@@ -109,76 +138,46 @@ If your version is below 2.38, you will need to upgrade your system or use a com
 
 ## Docker
 
-JMusicBot can be run using Docker for easy deployment and management. Pre-built images are available from the GitHub Container Registry. The container is configured to run headless and automatically generate a default `config.txt` on first run.
+Build a local image from this repository; these examples do not assume a published fork registry package:
+
+```bash
+docker build -t jmusicbot:2610.1.0 .
+```
+
+The container includes Java 25 and runs headless. **YouTube is unavailable in the Linux container** because the embedded yt-dlp/Deno tools support Windows x64 only. Other enabled sources remain usable.
 
 ### Quick Start
 
-#### For Existing Users (Migrating from JAR)
+1. Create a persistent bot directory, or use your existing directory containing `config.txt`, `Playlists/`, and other bot files.
+2. Follow [Setup](#setup) to create `config.txt`, set `discord.token` and `discord.owner`, and set `playback.audioSources.youtube = false`.
+3. The container runs as UID/GID `10001:10001`; make the mounted directory readable and writable by that user. For example, on Linux:
 
-If you already have a directory with your `config.txt`, `Playlists/` folder, and other bot files, either provide the path to that directory or run the container from within it:
-
-```bash
-docker run --rm -it \
-  --name jmusicbot \
-  -v "$(pwd):/musicbot" \
-  ghcr.io/arif-banai/musicbot:latest
-```
-
-This mounts your current directory as the musicbot volume, so the bot will use your existing configuration and playlists.
-
-#### For New Users
-
-1. **Create a directory for your bot and run the container:**
    ```bash
-   mkdir -p /path/to/jmusicbot
-   
+   sudo chown -R 10001:10001 /path/to/musicbot
+   ```
+
+4. Start the locally built image:
+
+   ```bash
    docker run --rm -it \
      --name jmusicbot \
      -v "/path/to/musicbot:/musicbot" \
-     ghcr.io/arif-banai/musicbot:latest
+     jmusicbot:2610.1.0
    ```
 
-2. **First Run:**
-   - On first run, if the mounted directory is empty, the bot will automatically generate a default `config.txt` file.
-   - Edit `/path/to/musicbot/config.txt` on your host and add your Discord bot token.
-   - Run the container again.
+If no `config.txt` exists, the bot generates a default; edit it with the required fields before restarting. Mount `/musicbot` on every run to retain configuration, playlists, and settings.
 
-#### Using Docker Compose (Optional)
+### Docker Compose
 
-If you prefer docker-compose, copy the example compose file and update the volume path:
+From the repository root:
 
 ```bash
 cp docker-compose.example.yml docker-compose.yml
-# Edit docker-compose.yml and update the volume path
-docker-compose up -d
+# Edit the volume path in docker-compose.yml and prepare config.txt as above
+docker compose up -d --build
 ```
 
-Example `docker-compose.yml`:
-
-```yaml
-services:
-  jmusicbot:
-    image: ghcr.io/arif-banai/musicbot:latest
-    container_name: jmusicbot
-    volumes:
-      - /path/to/musicbot:/musicbot
-    restart: unless-stopped
-```
-
-Check the [Docker Compose Example](docker-compose.example.yml) for more details.
-
-### Important Notes
-
-- **Config Persistence:** The `/musicbot` volume **must** be mounted for your configuration to persist. The bot reads and writes `config.txt` from `/musicbot` (the container's working directory).
-- **First Run:** If `config.txt` doesn't exist, the bot will generate a default one automatically. You'll need to edit it with your bot token before the bot can start.
-- **Image Tags:** 
-  - Use `ghcr.io/arif-banai/musicbot:latest` for the latest build from the master branch
-  - Use `ghcr.io/arif-banai/musicbot:0.6.1` (replace with actual version) to pin a specific release version
-  - **Recommendation:** For production, pin your image tag rather than using `latest`
-- **JAVA_OPTS:** The container uses ZGC and AlwaysPreTouch by default. Set `JAVA_OPTS` to add heap limits (e.g. `-Xms256m -Xmx512m`) or other flags. See [Performance Tuning](#performance-tuning) for details.
-
-
-To view published images, visit: `https://github.com/arif-banai/MusicBot/pkgs/container/musicbot`
+The [Compose example](docker-compose.example.yml) builds `jmusicbot:2610.1.0` locally. `JAVA_OPTS` overrides the default ZGC and AlwaysPreTouch flags; include them alongside heap limits if desired (see [Performance Tuning](#performance-tuning)).
 
 ## Performance Tuning
 
@@ -281,24 +280,21 @@ proxy {
 This project follows a **trunk-based development** workflow. The `master` branch is always releasable, and all work happens in short-lived branches:
 
 - **`feature/<slug>`** - New features (e.g., `feature/new-player-ui`)
-- **`fix/<slug>`** - Bug fixes (e.g., `fix/youtube-oauth`)
+- **`fix/<slug>`** - Bug fixes (e.g., `fix/youtube-playback`)
 - **`chore/<slug>`** - Maintenance tasks (e.g., `chore/update-deps`)
-- **`deps/<slug>`** - Dependency experiments (e.g., `deps/youtube-source-pr195`)
-- **`release/<version>`** - Release stabilization (optional, e.g., `release/0.6.3`)
+- **`deps/<slug>`** - Dependency experiments (e.g., `deps/update-yt-dlp`)
+- **`release/<version>`** - Release stabilization (optional, e.g., `release/2610.1.0`)
 
 Branch names are automatically validated by CI to ensure consistency. For detailed information about the development workflow, branch naming rules, and best practices, see [DEVELOPMENT_WORKFLOW.md](docs/DEVELOPMENT_WORKFLOW.md).
 
 ## Questions/Suggestions/Bug Reports
-**Please read the [Issues List](https://github.com/arif-banai/MusicBot/issues) before suggesting a feature**. 
+Please search this fork's [issues](https://github.com/kdm1jkm/MusicBot/issues) before opening a question, feature request, or reproducible bug report. Include your version, operating system, and relevant logs, with tokens and cookies removed. Upstream support services are not operated by this fork.
 
-If you have a question, need troubleshooting help, or want to brainstorm a new feature, please start a [Discussion](https://github.com/arif-banai/MusicBot/discussions).
-
-The Discord server is also available for questions and suggestions. [Click here to join](https://discord.gg/cyyUxNmmx6).
-
- If you'd like to suggest a feature or report a reproducible bug, please open an [Issue](https://github.com/arif-banai/MusicBot/issues) on this repository. If you like this bot, be sure to add a star to the libraries that make this possible: 
- - [**JDA**](https://github.com/DV8FromTheWorld/JDA)
+Libraries and tools that make this possible:
+ - [**JDA**](https://github.com/discord-jda/JDA)
  - [**lavaplayer**](https://github.com/lavalink-devs/lavaplayer)
- - [**youtube-source**](https://github.com/lavalink-devs/youtube-source)
+ - [**yt-dlp**](https://github.com/yt-dlp/yt-dlp) and its [**EJS scripts**](https://github.com/yt-dlp/ejs)
+ - [**Deno**](https://github.com/denoland/deno)
 
 ## Editing
-This bot (and the source code here) might not be easy to edit for inexperienced programmers. The main purpose of having the source public is to show the capabilities of the libraries, to allow others to understand how the bot works, and to allow those knowledgeable about java, JDA, and Discord bot development to contribute. There are many requirements and dependencies required to edit and compile it, and there will not be support provided for people looking to make changes on their own. Instead, consider making a feature request (see the above section). If you choose to make edits, please do so in accordance with the Apache 2.0 License.
+See [Development Workflow](docs/DEVELOPMENT_WORKFLOW.md) for contribution and build instructions. This fork preserves the original authors' attribution and the project's [Apache 2.0 License](LICENSE). Bundled third-party programs retain their own licenses; redistributing the JAR also requires preserving their notices and meeting applicable GPLv3+ corresponding-source obligations described [above](#bundled-youtube-playback-windows-x64).

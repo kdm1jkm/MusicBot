@@ -1,0 +1,38 @@
+BUNDLED DENO WINDOWS X64 DISTRIBUTION
+
+This JAR redistributes the unmodified official Deno executable archive as
+a separate subprocess runtime for yt-dlp's bundled EJS scripts. Deno is not
+covered by JMusicBot's Apache-2.0 project license.
+
+Version: 2.9.7 (upstream release tag v2.9.7)
+Binary archive: https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-pc-windows-msvc.zip
+Binary archive SHA-256: a0c3101b4158d1dfb7d6a78a7bf0f3de80c96bb423c152beec8beb22786f2238
+Release: https://github.com/denoland/deno/releases/tag/v2.9.7
+Source revision: 0c071246a412575e07423263404a5d13e7ed6aa2
+Source tree: https://github.com/denoland/deno/tree/0c071246a412575e07423263404a5d13e7ed6aa2
+Source archive: https://github.com/denoland/deno/archive/0c071246a412575e07423263404a5d13e7ed6aa2.tar.gz
+Build workflow: https://github.com/denoland/deno/blob/0c071246a412575e07423263404a5d13e7ed6aa2/.github/workflows/ci.generated.yml
+Dependency lock: https://github.com/denoland/deno/blob/0c071246a412575e07423263404a5d13e7ed6aa2/Cargo.lock
+Build manifest: https://github.com/denoland/deno/blob/0c071246a412575e07423263404a5d13e7ed6aa2/Cargo.toml
+Submodule source locations: https://github.com/denoland/deno/blob/0c071246a412575e07423263404a5d13e7ed6aa2/.gitmodules
+
+LICENSE.txt is the exact upstream MIT license and Deno author copyright
+notice from this release. Retain its copyright and permission notice in all
+copies or substantial portions of the software.
+
+The pinned Cargo.lock uses Rusty V8 150.4.0. Its MIT copyright notice is
+retained in RUSTY_V8_LICENSE.txt; the embedded V8 engine's BSD copyright,
+terms and component notices are retained in V8_LICENSE.txt.
+Rusty V8 source: https://github.com/denoland/rusty_v8/tree/v150.4.0
+Rusty V8 build instructions: https://github.com/denoland/rusty_v8/tree/v150.4.0
+V8 source revision: ac1e23989121713ca642f6650b34deff7b686896
+V8 source: https://github.com/denoland/v8/tree/ac1e23989121713ca642f6650b34deff7b686896
+V8 source archive: https://github.com/denoland/v8/archive/ac1e23989121713ca642f6650b34deff7b686896.tar.gz
+
+NODE_TYPES_LICENSE.txt and UNDICI_TYPES_LICENSE.txt preserve the exact
+notices of the Node and Undici type declarations embedded from this Deno
+revision. Their original locations are cli/tsc/dts/node/LICENSE and
+cli/tsc/dts/node/undici/LICENSE in the Deno source tree above.
+Dependencies and their original license/source material remain identified
+by the pinned Cargo.lock, upstream source tree and Rusty V8 submodule tree.
+No modification to the redistributed executable is made by JMusicBot.

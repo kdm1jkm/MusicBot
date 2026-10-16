@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.jagrosh.jmusicbot.config.migration.versions.LegacyToV1;
 import com.jagrosh.jmusicbot.config.migration.versions.V1ToV2;
+import com.jagrosh.jmusicbot.config.migration.versions.V2ToV3;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
 
@@ -41,6 +42,7 @@ public class ConfigMigration {
         // Register all available migrations
         MIGRATIONS.put(0, new LegacyToV1());
         MIGRATIONS.put(1, new V1ToV2());
+        MIGRATIONS.put(2, new V2ToV3());
         // Future migrations can be added here.
     }
     
@@ -66,7 +68,7 @@ public class ConfigMigration {
      * Gets the latest config version from the defaults.
      * 
      * @param defaults the default configuration
-     * @return the latest version number (2 if missing)
+     * @return the latest version number (3 if missing)
      */
     public static int getLatestVersion(Config defaults) {
         try {
@@ -74,9 +76,9 @@ public class ConfigMigration {
                 return defaults.getInt(META_CONFIG_VERSION_KEY);
             }
         } catch (ConfigException e) {
-            LOGGER.warn("Invalid configVersion in defaults, assuming version 2: {}", e.getMessage());
+            LOGGER.warn("Invalid configVersion in defaults, assuming version 3: {}", e.getMessage());
         }
-        return 2; // Default to version 2 if not specified
+        return 3; // Default to version 3 if not specified
     }
     
     /**

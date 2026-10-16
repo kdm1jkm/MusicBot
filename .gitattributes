@@ -3,6 +3,8 @@
 
 # Shell scripts must use LF (Unix line endings)
 *.sh text eol=lf
+/gradlew text eol=lf
+/.gitignore text eol=lf
 
 # Batch files must use CRLF (Windows line endings)
 *.bat text eol=crlf

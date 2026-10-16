@@ -43,7 +43,7 @@ jobs:
           elif [[ "$BRANCH_NAME" =~ ^deps/[a-z0-9-]+$ ]]; then
             VALID=true
             echo "✓ Branch name matches pattern: deps/<slug>"
-          # release/<version> (e.g., release/0.6.3 or release/0.6.3-rc1)
+          # release/<version> (e.g., release/2610.1.0 or release/2610.1.0-rc1)
           elif [[ "$BRANCH_NAME" =~ ^release/[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9-]+)?$ ]]; then
             VALID=true
             echo "✓ Branch name matches pattern: release/<version>"
@@ -57,7 +57,7 @@ jobs:
             echo "  - fix/<slug>         (e.g., fix/youtube-oauth)"
             echo "  - chore/<slug>       (e.g., chore/update-dependencies)"
             echo "  - deps/<slug>       (e.g., deps/youtube-source-pr195)"
-            echo "  - release/<version>  (e.g., release/0.6.3 or release/0.6.3-rc1)"
+            echo "  - release/<version>  (e.g., release/2610.1.0 or release/2610.1.0-rc1)"
             echo ""
             echo "Branch names should:"
             echo "  - Use lowercase letters, numbers, and hyphens only"

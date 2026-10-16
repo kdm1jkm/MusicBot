@@ -64,7 +64,7 @@ public class ConfigPanel extends JPanel {
     private final JSpinner maxSecondsSpinner;
     private final JSpinner maxYTPlaylistPagesSpinner;
     private final JSpinner skipRatioSpinner;
-    private final JCheckBox useYouTubeOAuthCheckBox;
+    private final JTextField youTubeCookiesFileField;
     
     // UI/Emojis section
     private final JTextField successEmojiField;
@@ -109,7 +109,7 @@ public class ConfigPanel extends JPanel {
         maxSecondsSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 86400, 60));
         maxYTPlaylistPagesSpinner = new JSpinner(new SpinnerNumberModel(10, 1, 100, 1));
         skipRatioSpinner = new JSpinner(new SpinnerNumberModel(0.55, 0.0, 1.0, 0.05));
-        useYouTubeOAuthCheckBox = new JCheckBox("Use YouTube OAuth for playback");
+        youTubeCookiesFileField = new JTextField(24);
         
         // UI/Emojis
         successEmojiField = new JTextField(5);
@@ -283,10 +283,14 @@ public class ConfigPanel extends JPanel {
         gbc.gridx = 1;
         panel.add(maxYTPlaylistPagesSpinner, gbc);
         
-        // Row 2: YouTube OAuth
+        // Row 2: Optional local YouTube cookies
         gbc.gridx = 0; gbc.gridy = 2;
-        gbc.gridwidth = 4;
-        panel.add(useYouTubeOAuthCheckBox, gbc);
+        panel.add(new JLabel("YouTube cookies file (optional)"), gbc);
+        gbc.gridx = 1;
+        gbc.gridwidth = 3;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        panel.add(youTubeCookiesFileField, gbc);
         
         return panel;
     }
@@ -427,7 +431,7 @@ public class ConfigPanel extends JPanel {
         maxSecondsSpinner.setValue((int) config.getMaxSeconds());
         maxYTPlaylistPagesSpinner.setValue(config.getMaxYTPlaylistPages());
         skipRatioSpinner.setValue(config.getSkipRatio());
-        useYouTubeOAuthCheckBox.setSelected(config.useYouTubeOauth());
+        youTubeCookiesFileField.setText(config.getYouTubeCookiesFile());
         
         // UI/Emojis
         successEmojiField.setText(config.getSuccess());
@@ -510,7 +514,7 @@ public class ConfigPanel extends JPanel {
         updates.put("playback.maxTrackSeconds", String.valueOf(maxSecondsSpinner.getValue()));
         updates.put("playback.maxYouTubePlaylistPages", String.valueOf(maxYTPlaylistPagesSpinner.getValue()));
         updates.put("playback.skipRatio", String.valueOf(skipRatioSpinner.getValue()));
-        updates.put("playback.youtube.useOAuth", String.valueOf(useYouTubeOAuthCheckBox.isSelected()));
+        updates.put("playback.youtube.cookiesFile", quoteString(youTubeCookiesFileField.getText()));
         
         // UI/Emojis
         updates.put("ui.emojis.success", quoteString(successEmojiField.getText()));
@@ -579,7 +583,7 @@ public class ConfigPanel extends JPanel {
      * Updates a key within a specific section of the config.
      */
     private String updateKeyInSection(String content, String section, String leafKey, String value) {
-        // Handle nested sections like "playback.youtube.useOAuth"
+        // Handle nested sections like "playback.youtube.cookiesFile"
         String[] sectionParts = section.split("\\.");
         
         // Find the section start

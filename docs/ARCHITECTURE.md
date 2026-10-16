@@ -1,5 +1,7 @@
 # JMusicBot Architectural Analysis
 
+> **Historical snapshot, not the current release architecture.** This document records the arif-banai upstream state at the commit and date below. Its version, dependencies, platform assumptions, and diagrams are retained as historical context, not rewritten to describe this fork's 2610.1.0 release. For current setup and support, see [kdm1jkm/MusicBot](https://github.com/kdm1jkm/MusicBot) and the [README](../README.md). In particular, current YouTube playback uses bundled yt-dlp/EJS and Deno on Windows x64 only; Linux containers do not support that backend.
+
 > **Document Metadata**
 > | Field | Value |
 > |-------|-------|
@@ -429,7 +431,7 @@ sequenceDiagram
 | Component | Technology |
 |-----------|------------|
 | Language | Java 25 |
-| Build | Maven 3.8+ |
+| Build | Gradle 9.1.0 Wrapper (`./gradlew`; JDK 25) |
 | Discord API | JDA 6.3.0 |
 | Command Framework | JDA-Chewtils 2.2.1 |
 | Audio Playback | Lavaplayer 2.2.6 |
