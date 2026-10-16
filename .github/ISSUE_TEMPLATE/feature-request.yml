@@ -42,7 +42,7 @@ body:
       label: Checklist
       description: Before submitting your issue, please affirm the following
       options:
-        - label: I have checked [this fork's documentation](https://github.com/kdm1jkm/MusicBot/blob/master/README.md) to make sure this feature doesn't already exist
+        - label: I have checked [this fork's documentation](https://github.com/kdm1jkm/MusicBot/blob/dev/README.md) to make sure this feature doesn't already exist
           required: true
         - label: I have searched for [similar requests in this fork's issues](https://github.com/kdm1jkm/MusicBot/issues?q=is%3Aissue)
           required: true

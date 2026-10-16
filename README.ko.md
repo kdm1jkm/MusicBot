@@ -11,7 +11,7 @@
 [![다운로드](https://img.shields.io/github/downloads/kdm1jkm/MusicBot/total.svg)](https://github.com/kdm1jkm/MusicBot/releases/latest)
 [![스타](https://img.shields.io/github/stars/kdm1jkm/MusicBot.svg)](https://github.com/kdm1jkm/MusicBot/stargazers)
 [![릴리스](https://img.shields.io/github/release/kdm1jkm/MusicBot.svg)](https://github.com/kdm1jkm/MusicBot/releases/latest)
-[![라이선스](https://img.shields.io/github/license/kdm1jkm/MusicBot.svg)](https://github.com/kdm1jkm/MusicBot/blob/master/LICENSE)
+[![라이선스](https://img.shields.io/github/license/kdm1jkm/MusicBot.svg)](https://github.com/kdm1jkm/MusicBot/blob/main/LICENSE)
 [![빌드 및 테스트](https://github.com/kdm1jkm/MusicBot/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/kdm1jkm/MusicBot/actions/workflows/build-and-test.yml)
 
 깔끔한 인터페이스를 제공하는 Discord 음악 봇입니다. 대부분의 음원 소스는 여러 운영체제에서 사용할 수 있지만, 내장 YouTube 백엔드는 Windows x64가 필요합니다.
@@ -290,7 +290,7 @@ proxy {
 
 ## 개발 워크플로
 
-**트렁크 기반 개발**을 사용합니다. `master`는 항상 릴리스 가능한 상태를 유지하며, 작업은 수명이 짧은 브랜치에서 진행합니다.
+기본 브랜치 **`dev`**에 개발 작업을 통합하며 CI 성공마다 `vYYMM.major.minor.beta-n` 태그를 생성합니다. **`main`**에는 dev에서 승격한 정식 태그가 있는 merge commit만 반영합니다. 일반 작업은 수명이 짧은 브랜치에서 진행합니다.
 
 - **`feature/<slug>`**: 새 기능 — 예: `feature/new-player-ui`
 - **`fix/<slug>`**: 버그 수정 — 예: `fix/youtube-playback`

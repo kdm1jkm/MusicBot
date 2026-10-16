@@ -1,279 +1,111 @@
-﻿# Development Workflow
+# Development Workflow
 
-This independent [kdm1jkm/MusicBot](https://github.com/kdm1jkm/MusicBot) fork follows a **trunk-based development** workflow. Its version line starts at **2610.1.0**, independently of upstream's 0.x releases.
+이 [kdm1jkm/MusicBot](https://github.com/kdm1jkm/MusicBot) 포크는 개발 통합용 `dev`와 정식 버전용 `main`을 분리합니다. 버전은 upstream의 0.x와 독립적인 `YYMM.major.minor`이며 현재 기준은 `2610.1.0`입니다.
 
-Clone this fork for development; keep upstream separate when importing changes:
+## Branch Strategy
+
+- **`dev`**: 기본 브랜치이자 최신 개발 버전. feature PR과 일반 개발 작업은 여기로 통합합니다.
+- **`main`**: 검증된 dev를 merge commit으로 승격하는 정식 버전 브랜치. 새 merge commit과 정식 태그를 한 번의 atomic push로 반영합니다.
+- 원격 `master`는 제거했습니다. 기존 clone의 로컬 브랜치나 다른 worktree는 자동 삭제하지 않습니다.
+- `main` 전환 시 기존 master SHA를 그대로 보존합니다. 태그 요구사항은 전환 후 들어오는 커밋에 적용하며 과거 이력을 다시 쓰지 않습니다.
+
+### Short-Lived Branches
+
+|브랜치|용도|예시|
+|---|---|---|
+|`feature/<slug>`|기능|`feature/new-player-ui`|
+|`fix/<slug>`|버그 수정|`fix/youtube-playback`|
+|`chore/<slug>`|유지보수·문서|`chore/update-gradle-plugins`|
+|`deps/<slug>`|의존성 실험|`deps/test-lavaplayer-2-3`|
+|`release/<version>`|선택적 안정화|`release/2610.1.0`|
+
+slug는 소문자·숫자·하이픈만 허용합니다. 안정화 브랜치도 먼저 dev에 통합합니다. 정식 태그를 별도 브랜치에서 임의 생성하지 않습니다.
+
+## Development Process
 
 ```bash
 git clone https://github.com/kdm1jkm/MusicBot.git
 cd MusicBot
 git remote add upstream https://github.com/arif-banai/MusicBot.git
+git switch dev
+git pull --ff-only origin dev
+git switch -c feature/my-new-feature
 ```
 
-`origin` is the publication target for this fork. Open pull requests and issues at `kdm1jkm/MusicBot`; preserve upstream author and license attribution when integrating changes.
+1. 작은 변경을 작성하고 검증합니다.
+2. 필요하면 `origin/dev`를 fetch하여 작업 브랜치에 rebase 또는 merge합니다.
+3. 명시적으로 `dev`를 대상으로 PR을 생성합니다.
+4. CI 및 리뷰를 통과한 후 사람이 merge합니다. feature PR은 squash merge를 권장합니다.
 
-## Branch Strategy
+커밋 메시지는 영어 `<type>: <description>` 형식입니다. 허용 type 예시: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`.
 
-### Trunk Branch: `master`
+## Verification
 
-- **Always releasable** - The `master` branch should always be in a deployable state
-- **Protected** - Direct pushes should be avoided; use pull requests
-- **Main integration point** - All changes merge into `master`
-- **Production-ready** - Code on `master` can be released at any time
+JDK 25와 Gradle Wrapper 9.1.0을 사용합니다. Windows에서는 `./gradlew`를 `.\gradlew.bat`로 바꿉니다.
 
-### Short-Lived Branches
+|검증|명령|
+|---|---|
+|전체 빌드·단위/통합 테스트·shaded JAR|`./gradlew --no-daemon build`|
+|단위/통합 테스트|`./gradlew --no-daemon test integrationTest`|
+|커버리지|`./gradlew jacocoTestReport jacocoIntegrationTestReport`|
+|선택적 lint|`./gradlew checkstyleMain checkstyleTest -Pcheckstyle`|
+|선택적 정적 분석|`./gradlew spotbugsMain -Pspotbugs`|
+|Docker 로컬 빌드|`docker build -t jmusicbot:2610.1.0 .`|
 
-All feature work happens in short-lived branches that are merged back to `master` quickly (typically within days, not weeks).
-
-#### Branch Types
-
-1. **`feature/<slug>`** - New features and enhancements
-   - Examples: `feature/new-player-ui`, `feature/playlist-import`
-   - Use for: Adding new functionality, UI improvements, major enhancements
-
-2. **`fix/<slug>`** - Bug fixes
-   - Examples: `fix/youtube-playback`, `fix/memory-leak`
-   - Use for: Fixing bugs, resolving issues, patching vulnerabilities
-
-3. **`chore/<slug>`** - Maintenance tasks
-   - Examples: `chore/update-dependencies`, `chore/refactor-audio-handler`
-   - Use for: Code cleanup, refactoring, dependency updates, documentation
-
-4. **`deps/<slug>`** - Dependency experiments
-   - Examples: `deps/update-yt-dlp`, `deps/test-jda-6.4`
-   - Use for: Testing dependency updates, experimenting with forks, evaluating new libraries
-
-5. **`release/<version>`** - Release stabilization (optional)
-   - Examples: `release/2610.1.0`, `release/2610.1.0-rc1`
-   - Use for: Stabilizing a release, release candidates, hotfixes for specific versions
-   - **Note**: Only create when you need to stabilize a release. Most releases can go directly from `master`
-
-### Branch Naming Rules
-
-- **Format**: `<type>/<descriptive-slug>`
-- **Slug requirements**:
-  - Lowercase letters, numbers, and hyphens only
-  - Descriptive and concise (e.g., `new-player-ui`, not `ui` or `new-feature`)
-  - No underscores or special characters
-- **Examples**:
-  - Valid: `feature/new-player-ui`
-  - Valid: `fix/youtube-playback`
-  - Valid: `chore/update-gradle-plugins`
-  - Valid: `deps/test-lavaplayer-2.3`
-  - Valid: `release/2610.1.0`
-  - Invalid: `feature/newFeature` (uppercase)
-  - Invalid: `fix/bug_123` (underscore)
-  - Invalid: `new-feature` (missing type prefix)
-  - Invalid: `feature/new feature` (spaces)
-
-## Development Process
-
-### 1. Starting Work
-
-```bash
-# Create a branch from master
-git checkout master
-git pull origin master
-git checkout -b feature/my-new-feature
-
-# Or for a bug fix
-git checkout -b fix/bug-description
-```
-
-### 2. Making Changes
-
-- Make small, focused commits
-- Write clear commit messages
-- Keep the branch up-to-date with `master`:
-  ```bash
-  git checkout master
-  git pull origin master
-  git checkout feature/my-new-feature
-  git rebase master  # or git merge master
-  ```
-
-### 3. Testing Locally
-
-- Use JDK 25 and the pinned Gradle 9.1.0 Wrapper; no global Gradle installation is required. On Windows, replace `./gradlew` with `.\gradlew.bat`.
-- Full build: `./gradlew --no-daemon build` runs unit tests (`test`), integration tests (`integrationTest`), and the shaded JAR task (`shadowJar`). The artifact is `build/libs/JMusicBot-2610.1.0-All.jar`.
-- Focused tasks: `./gradlew test`, `./gradlew integrationTest`, or `./gradlew shadowJar` (packaging only, without running tests).
-- Coverage: `./gradlew jacocoTestReport jacocoIntegrationTestReport` writes `build/reports/jacoco/test/jacocoTestReport.xml` and `build/reports/jacoco/integrationTest/jacocoIntegrationTestReport.xml`.
-- Docker-pruned packaging: `./gradlew shadowJar -Pdocker -x test -x integrationTest` excludes native dependencies not needed in the container. YouTube playback remains Windows x64 only.
-- Windows yt-dlp/Deno asset pins and checksum validation remain enforced during packaging; unavailable or corrupt assets fail the build.
-- Test Docker build: `docker build -t jmusicbot:test .`
-- Verify the bot works as expected
-
-### 4. Creating a Pull Request
-
-- Push your branch: `git push origin feature/my-new-feature`
-- Create a PR targeting `master`
-- CI validates branch naming, then runs the build and tests for pull requests targeting `master`.
-- Wait for CI to pass and code review. Docker publication is separate from PR validation.
-
-### 5. Merging
-
-- Once approved and CI passes, merge the PR
-- **Prefer squash merge** to keep history clean
-- Delete the branch after merging (GitHub can do this automatically)
+산출물은 `build/libs/JMusicBot-<version>-All.jar`입니다. Windows x64 yt-dlp/Deno의 고정 SHA-256 검증은 패키징 시 유지됩니다. Linux Docker는 내장 Windows YouTube 백엔드를 실행하지 못합니다.
 
 ## CI/CD Workflows
 
-### Branch Validation
-
-The `validate-branch-naming.yml` workflow automatically validates branch names when a pull request is opened.
-
-**What it checks:**
-- Branch name matches allowed patterns
-- Slug uses only lowercase, numbers, and hyphens
-- Proper type prefix is used
-
 ### Build and Test
 
-The `build-and-test.yml` workflow runs on pull requests targeting `master` and pushes to `master` (with path exclusions for documentation and repository metadata).
+`build-and-test.yml`은 dev/main 대상 PR과 dev/main의 모든 push를 검사합니다. 문서·workflow 변경도 제외하지 않습니다. Linux **Build and Test**와 **Windows x64 Bundled Tools**가 모두 성공해야 합니다. 수동 실행은 진단용이며 자동 beta 태그 자격은 push/dev 성공 run에만 있습니다.
 
-**What it does:**
-- Compiles the project
-- Runs unit and integration tests
-- Generates code coverage reports
-- Uploads coverage to Codecov
+### Development Tags
+
+`tag-dev.yml`은 동일 저장소의 성공한 push/dev CI를 재조정합니다. GitHub concurrency의 pending 실행 교체로 알림이 합쳐져도 성공 run 이력을 페이지 끝까지 조회하여 누락된 SHA를 처리합니다.
+
+- 버전 기준은 대상 SHA의 `gradle.properties`입니다.
+- 형식: `v2610.1.0.beta-1`, `v2610.1.0.beta-2`, ….
+- beta 번호는 동일 버전의 기존 원격 태그 중 최댓값 다음입니다. 삭제·재사용하지 않습니다.
+- 이미 태그가 있는 SHA는 CI 재실행으로 중복 태그를 만들지 않습니다.
+- 실패·취소·PR CI는 태그하지 않습니다. 이후 dev가 전진해도 성공한 과거 SHA가 dev 이력에 남아 있으면 해당 SHA를 태그합니다.
+- 자동화 workflow 정의는 기본 브랜치 dev에 있어야 활성화됩니다. 구현 PR merge 전에는 동작하지 않습니다.
+
+### Main Promotion
+
+1. 원하는 정식 버전을 `gradle.properties`에 반영하는 PR을 dev에 통합합니다.
+2. dev HEAD의 Linux/Windows push CI 성공과 beta 태그를 확인합니다.
+3. **Promote Main**을 **dev**에서 수동 실행합니다. 정식 버전과 검토한 dev HEAD의 전체 SHA를 입력합니다.
+4. workflow는 최신 원격 dev와 입력 SHA, 버전, 성공 CI, beta 태그를 확인합니다.
+5. main을 첫 부모, 선택한 dev HEAD를 둘째 부모로 하는 merge commit을 만들고 `vYYMM.major.minor` 태그와 함께 atomic push합니다.
+
+main HEAD를 직접 수정하거나 GitHub 웹 merge로 dev를 합치지 않습니다. 승격 중 dev/main이 변경되거나 버전/태그가 충돌하면 실패하며 임의 재시도·강제 push하지 않습니다. 이미 main에 포함된 dev는 새 승격 대상이 아닙니다. 다음 개발 버전은 dev의 `gradle.properties`를 일반 PR로 올립니다. 승격 workflow는 버전 변경 커밋을 추가하지 않습니다.
+
+### Remote Enforcement and Credentials
+
+- `main tagged promotion only`: main update를 제한하고 DeployKey actor만 예외로 둡니다.
+- `main immutable history`: 예외 없이 main 삭제·강제 push를 차단합니다.
+- `immutable version tags`: 예외 없이 `v*` 태그 변경·삭제를 차단합니다.
+- 승격 write deploy key의 private key는 `main-promotion` environment의 `MAIN_PROMOTION_KEY`에만 저장합니다. environment 실행 브랜치는 dev로 제한합니다. 로그나 저장소에 키를 출력/커밋하지 않습니다.
+- GitHub의 DeployKey 예외는 특정 key ID가 아니라 **deploy key 종류 전체**에 적용됩니다. 다른 write deploy key 추가는 main 승격 권한 추가와 같으므로 관리자가 검토해야 합니다. 저장소 workflow 작성 권한과 environment 정책 변경 권한도 신뢰 경계입니다.
+- 일반 관리자 push도 main update 규칙을 우회하지 못합니다. 저장소 관리자가 규칙 자체를 변경할 수 있다는 GitHub 관리 권한의 한계는 남습니다.
+- 키 교체 시 새 write deploy key를 등록하고 environment secret을 교체한 다음 이전 key를 폐기합니다. 개인 PAT로 우회하지 않습니다.
+
+### Existing Manual Release Publication
+
+**Make Release**는 main에 이미 승격된 정식 태그만 읽어 빌드하고 기존 방식으로 GitHub Release 초안을 만듭니다. 버전 bump 커밋·태그 생성·브랜치 push는 하지 않습니다. 새 Release 자동 연동은 이 변경의 범위가 아닙니다. 배포 전 라이선스·third-party notices 및 yt-dlp GPLv3+ 소스 제공 의무를 확인합니다.
 
 ### Docker Publication
 
-`docker-publish.yml` is configured to publish after successful `master` builds and on version tags (for example, `v2610.1.0`). `publish-preview-image.yml` can be dispatched manually for a selected ref. These workflows require package-write permissions and successful registry publication; their presence does not mean a public fork image already exists.
+`docker-publish.yml`은 승격된 정식 태그에서만 버전·SHA·latest 이미지를 발행합니다. beta 태그로 latest를 갱신하지 않습니다. `publish-preview-image.yml`은 별도 수동 preview 경로입니다. 설정 존재만으로 registry 발행 성공을 의미하지 않으며 실제 실행 결과를 확인합니다.
 
-Use a local build unless publication has been confirmed:
+## Existing Clones
 
 ```bash
-docker build -t jmusicbot:2610.1.0 .
+git fetch origin --prune
+git remote set-head origin -a
+# 사용 중인 worktree의 변경을 먼저 보존한 뒤 필요에 따라 수행:
+git switch --track origin/dev
 ```
 
-See [README Docker setup](../README.md#docker) and [docker-compose.example.yml](../docker-compose.example.yml). Linux containers cannot run the Windows x64 bundled YouTube backend.
-
-## Best Practices
-
-### Keep Branches Short-Lived
-
-- **Goal**: Merge within days, not weeks
-- **Why**: Reduces merge conflicts, keeps code fresh, enables faster feedback
-- **If stuck**: Break work into smaller PRs
-
-### Keep `master` Releasable
-
-- **Never** push broken code to `master`
-- **Always** ensure tests pass before merging
-- **Use** feature flags if needed for incomplete features
-- **Consider** draft PRs for work-in-progress
-
-### Small, Focused PRs
-
-- **One feature/fix per PR** when possible
-- **Easier to review** and understand
-- **Faster to merge** and deploy
-- **Less risk** of conflicts
-
-### Regular Integration
-
-- **Rebase or merge** `master` into your branch regularly
-- **Run tests** locally before pushing
-- **Fix CI failures** promptly
-
-### Clear Commit Messages
-
-- **Format**: `<type>: <description>`
-- **Types**: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`
-- **Example**: `feat: add playlist import from YouTube`
-- **Why**: Makes history readable and enables automated changelogs
-
-## Release Process
-
-### Standard Release (from master)
-
-1. **Ensure `master` is stable**
-   - All tests passing
-   - No known critical bugs
-   - Documentation updated
-
-2. **Update version in `gradle.properties`** (manual release path; **Make Release** performs this itself)
-   - Set `version=2610.1.0` (or the intended release version), or run `./gradlew setVersion -PreleaseVersion=2610.1.0`.
-   - Read the current version with `./gradlew -q printVersion`.
-   - Commit: `git commit -am "chore: bump version to 2610.1.0"`
-
-3. **For a manual release, build and create the tag** (skip this step when using **Make Release**)
-   ```bash
-   ./gradlew --no-daemon build
-   git tag v2610.1.0
-   git push origin v2610.1.0
-   ```
-
-4. **Publish the release**
-   - Either run **Make Release** on `master` with version `2610.1.0` (it updates the version, builds, and prepares a draft release/tag), or create a release manually from the tag above. Use one path, not both for the same version.
-   - Attach `build/libs/JMusicBot-2610.1.0-All.jar`; retain the `All` classifier in the published filename.
-   - Review and publish the draft at [this fork's releases](https://github.com/kdm1jkm/MusicBot/releases).
-   - Preserve third-party notices and satisfy bundled yt-dlp GPLv3+ corresponding-source obligations; see [README](../README.md#bundled-youtube-playback-windows-x64).
-
-5. **Check Docker publication separately**, if enabled; do not advertise a registry tag until it is successfully published and accessible.
-
-### Release Branch (for stabilization)
-
-Only use if you need to stabilize a release while continuing development:
-
-1. **Create release branch**
-   ```bash
-   git checkout -b release/2610.1.0
-   git push origin release/2610.1.0
-   ```
-
-2. **Stabilize on release branch**
-   - Fix critical bugs
-   - Run extensive testing
-   - Cherry-pick fixes from `master` if needed
-
-3. **Tag from release branch**
-   ```bash
-   git tag v2610.1.0
-   git push origin v2610.1.0
-   ```
-
-4. **Merge back to master** (if needed)
-   - Merge any fixes back to `master`
-   - Delete release branch after release
-
-## FAQ
-
-### Q: Can I push directly to master?
-
-**A**: Not recommended. Use pull requests for all changes to ensure:
-- Code review
-- CI validation
-- Better history tracking
-
-### Q: How long should branches live?
-
-**A**: Ideally less than a week. If work takes longer, consider:
-- Breaking into smaller PRs
-- Using feature flags
-- Creating a release branch if needed
-
-### Q: What if I need to experiment?
-
-**A**: Use `deps/<slug>` branches for dependency experiments, or create a personal fork for major experiments.
-
-### Q: Can I use different branch names?
-
-**A**: The CI will reject branches that don't match the allowed patterns. This ensures consistency and makes it easier to understand what each branch is for.
-
-### Q: What about hotfixes?
-
-**A**: For urgent production fixes:
-1. Create `fix/<description>` branch from `master`
-2. Fix the issue
-3. Create PR and merge quickly
-4. Tag the next fork release version and publish its release notes and `All.jar` artifact.
-
-## Summary
-
-- **Trunk**: `master` is always releasable
-- **Branches**: Short-lived, type-prefixed (`feature/`, `fix/`, `chore/`, `deps/`, `release/`)
-- **Process**: Branch -> Develop -> Test -> PR -> Merge -> Release
-- **CI**: Automatic validation and testing; Docker publication requires separate successful registry access
-- **Goal**: Fast, safe, continuous integration and deployment
+다른 worktree가 사용 중인 로컬 master를 강제로 rename/delete하지 않습니다. 일반 PR은 dev, 정식 승격은 Promote Main이라는 구분을 유지합니다.
