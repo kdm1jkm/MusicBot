@@ -62,6 +62,8 @@ Windows 프로세스 인자 경계 테스트는 기본 제공 Windows PowerShell
 
 `build-and-test.yml`은 dev/main 대상 PR과 dev/main의 모든 push를 검사합니다. 문서·workflow 변경도 제외하지 않습니다. Linux **Build and Test**와 **Windows x64 Bundled Tools**가 모두 성공해야 합니다. 수동 실행은 진단용이며 자동 beta 태그 자격은 push/dev 성공 run에만 있습니다.
 
+Windows packaged-tool smoke는 실제 shaded JAR에서 도구를 추출하고 PATH를 Java bin으로 제한하여 실행합니다. yt-dlp는 첫 버전 줄 전체가 고정 버전과 일치해야 합니다. Deno는 정확한 `deno <version>` 뒤에 공백과 괄호로 구분된 정상 build metadata를 허용하지만, 다른 버전이나 접두사만 같은 버전은 거부합니다.
+
 ### Development Tags
 
 `tag-dev.yml`은 동일 저장소의 성공한 push/dev CI를 재조정합니다. GitHub concurrency의 pending 실행 교체로 알림이 합쳐져도 성공 run 이력을 페이지 끝까지 조회하여 누락된 SHA를 처리합니다.
