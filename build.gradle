@@ -19,11 +19,17 @@ repositories {
     mavenCentral()
     maven { url = uri('https://m2.chew.pro/releases') }
     maven { url = uri('https://maven.lavalink.dev/releases') }
+    maven {
+        url = uri('https://maven.lavalink.dev/snapshots')
+        content { includeGroup 'dev.lavalink.youtube' }
+    }
     maven { url = uri('https://m2.dv8tion.net/releases') }
     maven { url = uri('https://jitpack.io') }
 }
 
 def dockerBuild = providers.gradleProperty('docker').isPresent()
+// Immutable published build of upstream commit 2be8e542d3f6f178e048dca565892684c2e40177.
+def youtubeSourceVersion = '2be8e542d3f6f178e048dca565892684c2e40177-20260917.205250-1'
 def jdavePlatforms = dockerBuild ? ['linux-x86-64', 'linux-aarch64'] :
         ['linux-x86-64', 'linux-aarch64', 'win-x86-64', 'darwin']
 def udpqueuePlatforms = dockerBuild ? ['linux-x86-64', 'linux-aarch64'] :
@@ -45,7 +51,7 @@ dependencies {
     jdavePlatforms.each { runtimeOnly "club.minnced:jdave-native-${it}:0.1.7" }
     udpqueuePlatforms.each { runtimeOnly "club.minnced:udpqueue-native-${it}:0.2.12" }
     implementation 'dev.arbjerg:lavaplayer:2.2.7'
-    implementation 'dev.lavalink.youtube:v2:1.18.2'
+    implementation "dev.lavalink.youtube:v2:${youtubeSourceVersion}"
     implementation 'ch.qos.logback:logback-classic:1.5.25'
     implementation 'com.typesafe:config:1.4.3'
     implementation 'org.jsoup:jsoup:1.22.1'
@@ -61,6 +67,7 @@ dependencies {
         implementation('org.json:json') { version { strictly '20240303' } }
         implementation('org.mozilla:rhino-engine') { version { strictly '1.7.15' } }
         implementation('dev.arbjerg:lava-common') { version { strictly '2.2.7' } }
+        implementation('dev.lavalink.youtube:common') { version { strictly youtubeSourceVersion } }
     }
 
     testImplementation platform('org.junit:junit-bom:5.14.2')

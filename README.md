@@ -100,7 +100,7 @@ Alternatively, use the stop-parsing token so the rest of the line is passed lite
 
 ### YouTube playback
 
-Use `JMusicBot-2610.1.0-All.jar` with Java 25 or newer. YouTube runs inside the bot through [youtube-source](https://github.com/lavalink-devs/youtube-source), using the Lavaplayer 2.x `v2` module pinned to **1.18.2**. A separate Lavalink server, yt-dlp, Python, Deno, and FFmpeg are not required. No executable tools are extracted or launched for YouTube.
+Use `JMusicBot-2610.1.0-All.jar` with Java 25 or newer. YouTube runs inside the bot through [youtube-source](https://github.com/lavalink-devs/youtube-source), using the Lavaplayer 2.x `v2` module pinned to upstream commit [`2be8e542`](https://github.com/lavalink-devs/youtube-source/commit/2be8e542d3f6f178e048dca565892684c2e40177), immutable build `20260917.205250-1`. Both `v2` and `common` are pinned together in `build.gradle`. This includes the Android/iOS playback fixes missing from release 1.18.2. Playback uses those mobile clients; Android VR is retained for metadata only. A separate Lavalink server, yt-dlp, Python, Deno, and FFmpeg are not required. No executable tools are extracted or launched for YouTube.
 
 The upstream source handles video URLs, search, playlists, seeking, and repeat playback. `playback.maxYouTubePlaylistPages` still limits playlist loading, and the existing Lavaplayer proxy setting also applies to YouTube. This backend has no Windows-only restriction; playback remains subject to the platform's Java/native audio support and YouTube's network, account, and IP restrictions. Private or restricted videos are not guaranteed to work.
 

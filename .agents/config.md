@@ -56,7 +56,7 @@ Confirmed: `keep-in-git`.
 
 ## Verification commands
 
-Prerequisites: JDK 25 (`JavaLanguageVersion.of(25)`) and the pinned Gradle 9.1.0 Wrapper (`./gradlew` on Unix/Git Bash, `.\gradlew.bat` on Windows PowerShell/CMD). YouTube uses `dev.lavalink.youtube:v2:1.18.2`; packaging no longer downloads or bundles yt-dlp/Deno executables.
+Prerequisites: JDK 25 (`JavaLanguageVersion.of(25)`) and the pinned Gradle 9.1.0 Wrapper (`./gradlew` on Unix/Git Bash, `.\gradlew.bat` on Windows PowerShell/CMD). YouTube pins both official `v2` and `common` to upstream commit `2be8e542d3f6f178e048dca565892684c2e40177`, immutable build `20260917.205250-1` (`youtubeSourceVersion` in `build.gradle`), including current Android/iOS playback fixes. Packaging does not bundle yt-dlp/Deno executables.
 
 | Check | Target command / applicability |
 | --- | --- |

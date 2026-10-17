@@ -107,7 +107,7 @@ java "-Dfile.encoding=UTF-8" "-Dnogui=true" "--enable-native-access=ALL-UNNAMED"
 
 ### YouTube 재생
 
-Java 25 이상에서 `JMusicBot-2610.1.0-All.jar`를 실행하세요. YouTube는 [youtube-source](https://github.com/lavalink-devs/youtube-source)의 Lavaplayer 2.x용 `v2` 모듈 **1.18.2**를 통해 봇 내부에서 처리합니다. 별도 Lavalink 서버, yt-dlp, Python, Deno, FFmpeg는 필요하지 않습니다. YouTube용 실행 파일을 추출하거나 별도 프로세스로 실행하지 않습니다.
+Java 25 이상에서 `JMusicBot-2610.1.0-All.jar`를 실행하세요. YouTube는 [youtube-source](https://github.com/lavalink-devs/youtube-source)의 Lavaplayer 2.x용 `v2` 모듈을 봇 내부에서 사용합니다. release 1.18.2에 없는 Android/iOS 재생 수정을 포함한 upstream commit [`2be8e542`](https://github.com/lavalink-devs/youtube-source/commit/2be8e542d3f6f178e048dca565892684c2e40177)의 불변 빌드 `20260917.205250-1`로 고정하며 `v2`와 `common` 버전은 `build.gradle`에서 함께 관리합니다. 재생은 Android/iOS 클라이언트를 사용하고 Android VR은 메타데이터 전용으로 유지합니다. 별도 Lavalink 서버, yt-dlp, Python, Deno, FFmpeg는 필요하지 않으며 YouTube용 실행 파일을 추출하거나 별도 프로세스로 실행하지 않습니다.
 
 영상 URL·검색·재생목록·탐색·반복 재생은 upstream 소스가 처리합니다. `playback.maxYouTubePlaylistPages`로 재생목록 로딩을 제한하며 기존 Lavaplayer 프록시 설정도 YouTube에 적용됩니다. 백엔드 자체의 Windows 전용 제한은 없지만, 각 플랫폼의 Java/native 오디오 지원과 YouTube의 네트워크·계정·IP 제한은 적용됩니다.
 

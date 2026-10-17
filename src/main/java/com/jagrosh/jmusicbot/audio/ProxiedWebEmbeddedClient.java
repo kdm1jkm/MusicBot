@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
-/** Keeps youtube-source 1.18.2's separate embed-page request on the configured audio proxy. */
+/** Keeps youtube-source's separate embed-page request on the configured audio proxy. */
 final class ProxiedWebEmbeddedClient extends WebEmbeddedWithThumbnail {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxiedWebEmbeddedClient.class);
     private static final Pattern HOST_FLAGS = Pattern.compile("\"encryptedHostFlags\":\"([^\"]+)\"");

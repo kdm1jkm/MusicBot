@@ -31,7 +31,10 @@ import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceM
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.clients.AndroidWithThumbnail;
 import dev.lavalink.youtube.clients.AndroidVrWithThumbnail;
+import dev.lavalink.youtube.clients.ClientOptions;
+import dev.lavalink.youtube.clients.IosWithThumbnail;
 import dev.lavalink.youtube.clients.MusicWithThumbnail;
 import dev.lavalink.youtube.clients.WebEmbeddedWithThumbnail;
 import dev.lavalink.youtube.clients.WebWithThumbnail;
@@ -69,8 +72,12 @@ public enum AudioSource
                     ? ProxyUtil.createApacheProxy(config) : null;
             WebEmbeddedWithThumbnail embedded = proxy == null
                     ? new WebEmbeddedWithThumbnail() : new ProxiedWebEmbeddedClient(proxy);
+            // Android VR still loads playlists, but its playback endpoint can require login.
+            ClientOptions metadataOnly = new ClientOptions();
+            metadataOnly.setPlayback(false);
             YoutubeAudioSourceManager youtube = new YoutubeAudioSourceManager(
-                    new MusicWithThumbnail(), new AndroidVrWithThumbnail(),
+                    new MusicWithThumbnail(), new AndroidVrWithThumbnail(metadataOnly),
+                    new AndroidWithThumbnail(), new IosWithThumbnail(),
                     new WebWithThumbnail(), embedded);
             youtube.setPlaylistPageCount(config.getMaxYTPlaylistPages());
             if (proxy != null) {

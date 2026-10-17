@@ -53,7 +53,7 @@ JDK 25와 Gradle Wrapper 9.1.0을 사용합니다. Windows에서는 `./gradlew`�
 |선택적 정적 분석|`./gradlew spotbugsMain -Pspotbugs`|
 |Docker 로컬 빌드|`docker build -t jmusicbot:2610.1.0 .`|
 
-산출물은 `build/libs/JMusicBot-<version>-All.jar`입니다. YouTube는 고정 Java 의존성 `dev.lavalink.youtube:v2:1.18.2`를 사용하며, yt-dlp/Deno 실행 파일을 다운로드하거나 포함하지 않습니다. 지원 플랫폼의 Docker에서도 동일한 내장 youtube-source 백엔드를 사용합니다.
+산출물은 `build/libs/JMusicBot-<version>-All.jar`입니다. YouTube의 공식 `v2`/`common` 의존성은 `build.gradle`의 `youtubeSourceVersion`으로 upstream commit `2be8e542d3f6f178e048dca565892684c2e40177`, 불변 빌드 `20260917.205250-1`에 함께 고정합니다. release 1.18.2에 없는 Android/iOS 재생 수정을 포함합니다. yt-dlp/Deno 실행 파일은 다운로드하거나 포함하지 않으며 지원 플랫폼의 Docker에서도 동일한 내장 youtube-source 백엔드를 사용합니다.
 
 ## CI/CD Workflows
 
@@ -61,7 +61,7 @@ JDK 25와 Gradle Wrapper 9.1.0을 사용합니다. Windows에서는 `./gradlew`�
 
 `build-and-test.yml`은 dev/main 대상 PR과 dev/main의 모든 push를 검사합니다. 문서·workflow 변경도 제외하지 않습니다. Linux **Build and Test**와 **Windows x64 Build**가 모두 성공해야 합니다. 수동 실행은 진단용이며 자동 beta 태그 자격은 push/dev 성공 run에만 있습니다.
 
-Windows도 동일한 Gradle 빌드와 단위·통합 테스트를 실행합니다. 폐기된 yt-dlp/Deno 도구 추출·버전 smoke는 실행하지 않습니다. youtube-source 1.18.2의 embedded 보조 요청은 별도 HTTP 클라이언트를 사용하므로 `ProxiedWebEmbeddedClient`가 같은 오디오 프록시를 적용합니다.
+Windows도 동일한 Gradle 빌드와 단위·통합 테스트를 실행합니다. 폐기된 yt-dlp/Deno 도구 추출·버전 smoke는 실행하지 않습니다. Android/iOS는 재생용, Android VR은 메타데이터 전용입니다. upstream embedded 보조 요청은 별도 HTTP 클라이언트를 사용하므로 `ProxiedWebEmbeddedClient`가 같은 오디오 프록시를 적용합니다.
 
 ### Development Tags
 
