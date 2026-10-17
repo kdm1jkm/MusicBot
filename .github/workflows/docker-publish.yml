@@ -81,7 +81,7 @@ jobs:
             type=raw,value=sha-${{ steps.metadata.outputs.sha }}
           # The application is Apache-2.0; the distribution includes separately licensed components.
           labels: |
-            org.opencontainers.image.description=Independent JMusicBot fork; Docker supports non-YouTube sources only (bundled yt-dlp requires Windows x64)
+            org.opencontainers.image.description=Independent JMusicBot fork with embedded youtube-source playback
             org.opencontainers.image.licenses=NOASSERTION
 
       - name: Build and push Docker image

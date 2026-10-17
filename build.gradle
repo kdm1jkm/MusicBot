@@ -1,6 +1,3 @@
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
-import java.security.MessageDigest
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.testing.Test
 import org.gradle.testing.jacoco.tasks.JacocoReport
@@ -12,7 +9,7 @@ plugins {
 }
 
 group = 'io.github.kdm1jkm'
-description = 'Independently maintained JMusicBot fork with bundled Windows x64 YouTube playback'
+description = 'Independently maintained JMusicBot fork with youtube-source playback'
 
 java {
     toolchain { languageVersion = JavaLanguageVersion.of(25) }
@@ -22,11 +19,17 @@ repositories {
     mavenCentral()
     maven { url = uri('https://m2.chew.pro/releases') }
     maven { url = uri('https://maven.lavalink.dev/releases') }
+    maven {
+        url = uri('https://maven.lavalink.dev/snapshots')
+        content { includeGroup 'dev.lavalink.youtube' }
+    }
     maven { url = uri('https://m2.dv8tion.net/releases') }
     maven { url = uri('https://jitpack.io') }
 }
 
 def dockerBuild = providers.gradleProperty('docker').isPresent()
+// Immutable published build of upstream commit 2be8e542d3f6f178e048dca565892684c2e40177.
+def youtubeSourceVersion = '2be8e542d3f6f178e048dca565892684c2e40177-20260917.205250-1'
 def jdavePlatforms = dockerBuild ? ['linux-x86-64', 'linux-aarch64'] :
         ['linux-x86-64', 'linux-aarch64', 'win-x86-64', 'darwin']
 def udpqueuePlatforms = dockerBuild ? ['linux-x86-64', 'linux-aarch64'] :
@@ -48,6 +51,7 @@ dependencies {
     jdavePlatforms.each { runtimeOnly "club.minnced:jdave-native-${it}:0.1.7" }
     udpqueuePlatforms.each { runtimeOnly "club.minnced:udpqueue-native-${it}:0.2.12" }
     implementation 'dev.arbjerg:lavaplayer:2.2.7'
+    implementation "dev.lavalink.youtube:v2:${youtubeSourceVersion}"
     implementation 'ch.qos.logback:logback-classic:1.5.25'
     implementation 'com.typesafe:config:1.4.3'
     implementation 'org.jsoup:jsoup:1.22.1'
@@ -63,6 +67,7 @@ dependencies {
         implementation('org.json:json') { version { strictly '20240303' } }
         implementation('org.mozilla:rhino-engine') { version { strictly '1.7.15' } }
         implementation('dev.arbjerg:lava-common') { version { strictly '2.2.7' } }
+        implementation('dev.lavalink.youtube:common') { version { strictly youtubeSourceVersion } }
     }
 
     testImplementation platform('org.junit:junit-bom:5.14.2')
@@ -80,62 +85,6 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.addAll(['-Xlint:deprecation'])
 }
 
-def youtubeAssets = [
-    ytdlp: [version: providers.gradleProperty('bundledYtdlpVersion').get(),
-            sha256: providers.gradleProperty('bundledYtdlpSha256').get(), filename: 'yt-dlp.exe'],
-    deno: [version: providers.gradleProperty('bundledDenoVersion').get(),
-           sha256: providers.gradleProperty('bundledDenoSha256').get(), filename: 'deno.zip']
-]
-youtubeAssets.ytdlp.url = "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/${youtubeAssets.ytdlp.version}/yt-dlp.exe"
-youtubeAssets.deno.url = "https://github.com/denoland/deno/releases/download/v${youtubeAssets.deno.version}/deno-x86_64-pc-windows-msvc.zip"
-
-def bundleYoutubeTools = tasks.register('bundleYoutubeTools') {
-    group = 'build'
-    description = 'Download and verify pinned Windows tools and generate embedded resources.'
-    inputs.properties(youtubeAssets.collectEntries { name, asset -> [(name): asset.toString()] })
-    def generated = layout.buildDirectory.dir('generated-resources')
-    outputs.dir(generated)
-    // Recheck cached executables on every build, including when generated resources already exist.
-    outputs.upToDateWhen { false }
-    doLast {
-        def checksum = { File file ->
-            def digest = MessageDigest.getInstance('SHA-256')
-            file.withInputStream { stream ->
-                byte[] buffer = new byte[65536]
-                int count
-                while ((count = stream.read(buffer)) != -1) digest.update(buffer, 0, count)
-            }
-            HexFormat.of().formatHex(digest.digest())
-        }
-        File output = generated.get().dir('ytdlp/windows-x86_64').asFile
-        Files.createDirectories(output.toPath())
-        youtubeAssets.each { name, asset ->
-            File cached = layout.buildDirectory.file("bundled-tools/${name}-${asset.version}/${asset.filename}").get().asFile
-            Files.createDirectories(cached.parentFile.toPath())
-            if (!cached.exists()) {
-                def temporary = Files.createTempFile(cached.parentFile.toPath(), asset.filename, '.download')
-                try {
-                    logger.lifecycle("Downloading pinned ${name} ${asset.version}")
-                    def connection = URI.create(asset.url).toURL().openConnection()
-                    connection.connectTimeout = 30000
-                    connection.readTimeout = 300000
-                    connection.setRequestProperty('User-Agent', 'JMusicBot-Gradle-Build')
-                    connection.inputStream.withCloseable { stream -> Files.copy(stream, temporary, StandardCopyOption.REPLACE_EXISTING) }
-                    if (checksum(temporary.toFile()) != asset.sha256)
-                        throw new GradleException("Downloaded ${name} checksum mismatch; no binary was published.")
-                    Files.move(temporary, cached.toPath(), StandardCopyOption.REPLACE_EXISTING)
-                } finally { Files.deleteIfExists(temporary) }
-            }
-            if (checksum(cached) != asset.sha256)
-                throw new GradleException("Cached ${name} checksum mismatch. Delete ${cached} and rebuild.")
-            Files.copy(cached.toPath(), new File(output, asset.filename).toPath(), StandardCopyOption.REPLACE_EXISTING)
-        }
-        new File(output, 'tools.properties').setText(youtubeAssets.collect { name, asset ->
-            "${name}.version=${asset.version}\n${name}.sha256=${asset.sha256}\n"
-        }.join(''), 'UTF-8')
-    }
-}
-sourceSets.main.resources.srcDir(bundleYoutubeTools)
 
 tasks.withType(AbstractArchiveTask).configureEach {
     preserveFileTimestamps = false
@@ -168,13 +117,11 @@ tasks.withType(Test).configureEach {
     useJUnitPlatform()
     maxHeapSize = '1g'
     jvmArgs '--enable-native-access=ALL-UNNAMED'
-    // Gradle isolates tests in a worker ClassLoader. Java subprocess fixtures need the real test classpath.
-    doFirst { systemProperty 'java.class.path', sourceSets.test.runtimeClasspath.asPath }
     testLogging { events 'failed', 'skipped'; exceptionFormat = 'full' }
 }
 
 tasks.named('test', Test) {
-    include '**/unit/**/*Test.class', '**/unit/**/*Tests.class', '**/audio/ytdlp/*Test.class'
+    include '**/unit/**/*Test.class', '**/unit/**/*Tests.class', '**/audio/*Test.class'
 }
 def integrationTest = tasks.register('integrationTest', Test) {
     description = 'Run integration tests using the shared test source set.'

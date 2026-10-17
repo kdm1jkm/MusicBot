@@ -86,13 +86,13 @@ class ConfigMigrationTest {
         }
         
         @Test
-        @DisplayName("getLatestVersion returns 3 for defaults without meta.configVersion")
-        void testGetLatestVersion_noVersion_returns3() {
+        @DisplayName("getLatestVersion returns 4 for defaults without meta.configVersion")
+        void testGetLatestVersion_noVersion_returns4() {
             Config defaults = LegacyConfigBuilder.create().build();
             
             int version = ConfigMigration.getLatestVersion(defaults);
             
-            assertEquals(3, version);
+            assertEquals(4, version);
         }
     }
     
@@ -141,7 +141,7 @@ class ConfigMigrationTest {
             Config config = LegacyConfigBuilder.create().build();
             
             assertThrows(ConfigMigrationException.class, () -> {
-                ConfigMigration.migrate(config, 0, 4); // No migration for 3->4
+                ConfigMigration.migrate(config, 0, 5); // No migration for 4->5
             });
         }
     }

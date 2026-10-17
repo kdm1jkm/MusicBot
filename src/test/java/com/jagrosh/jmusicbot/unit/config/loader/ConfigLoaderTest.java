@@ -149,10 +149,10 @@ class ConfigLoaderTest extends BaseConfigTest {
                 .withToken("test_token")
                 .build();
             
-            // Create defaults that claim version 4 (no migration path exists for 3->4)
-            // Migration will succeed through version 3, then fail for 3->4.
+            // Create defaults that claim version 5 (no migration path exists for 4->5)
+            // Migration will succeed through version 4, then fail for 4->5.
             Config defaults = V1ConfigBuilder.create()
-                .withMetaVersion(4)
+                .withMetaVersion(5)
                 .build();
             
             // Should throw ConfigMigrationException, not swallow it
@@ -194,7 +194,8 @@ class ConfigLoaderTest extends BaseConfigTest {
             // The merged config should have values from defaults (reference.conf)
             // Verify it has the expected structure from v1 format
             assertTrue(merged.hasPath("meta.configVersion"));
-            assertEquals(3, merged.getInt("meta.configVersion"));
+            assertEquals(4, merged.getInt("meta.configVersion"));
+            assertFalse(merged.hasPath("playback.youtube.cookiesFile"));
         }
         
         @Test

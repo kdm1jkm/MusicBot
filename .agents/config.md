@@ -56,20 +56,20 @@ Confirmed: `keep-in-git`.
 
 ## Verification commands
 
-Prerequisites: JDK 25 (`JavaLanguageVersion.of(25)`) and the pinned Gradle 9.1.0 Wrapper (`./gradlew` on Unix/Git Bash, `.\gradlew.bat` on Windows PowerShell/CMD). Packaging (`bundleYoutubeTools` / `shadowJar`) validates pinned Windows x64 `yt-dlp.exe` and `deno.zip` SHA-256 checksums.
+Prerequisites: JDK 25 (`JavaLanguageVersion.of(25)`) and the pinned Gradle 9.1.0 Wrapper (`./gradlew` on Unix/Git Bash, `.\gradlew.bat` on Windows PowerShell/CMD). YouTube pins both official `v2` and `common` to upstream commit `2be8e542d3f6f178e048dca565892684c2e40177`, immutable build `20260917.205250-1` (`youtubeSourceVersion` in `build.gradle`), including current Android/iOS playback fixes. Packaging does not bundle yt-dlp/Deno executables.
 
 | Check | Target command / applicability |
 | --- | --- |
 | test | `./gradlew --no-daemon test integrationTest` (or `.\gradlew.bat --no-daemon test integrationTest` on Windows; unit tests via `test`, integration tests via `integrationTest`, opt-in E2E via `./gradlew --no-daemon e2eTest`) |
 | lint | `./gradlew --no-daemon checkstyleMain checkstyleTest -Pcheckstyle` and `./gradlew --no-daemon spotbugsMain -Pspotbugs` (opt-in Gradle property checks defined in `build.gradle`; not required by default PR CI, while `JavaCompile` enforces `-Xlint:deprecation`) |
 | typecheck | `Not applicable` as a standalone tool: Java 25 static type checking is enforced during compilation via `./gradlew --no-daemon compileJava compileTestJava` (included in `test` and `build`) |
-| build | `./gradlew --no-daemon build` (or `.\gradlew.bat --no-daemon build`; runs `compileJava`, `bundleYoutubeTools`, `test`, `integrationTest`, `jar`, `shadowJar` producing `build/libs/JMusicBot-<version>-All.jar`) |
+| build | `./gradlew --no-daemon build` (or `.\gradlew.bat --no-daemon build`; runs `compileJava`, `test`, `integrationTest`, `jar`, `shadowJar` producing `build/libs/JMusicBot-<version>-All.jar`) |
 
 Required CI checks on pull requests targeting `dev` (and validation of any PR targeting `main`, whose ordinary merge is blocked):
 - `.github/workflows/validate-branch-naming.yml`: `Validate Branch Naming Convention` (when PR is opened)
 - `.github/workflows/build-and-test.yml`:
   - `Build and Test` (`./gradlew --no-daemon build jacocoTestReport jacocoIntegrationTestReport` on `ubuntu-latest`)
-  - `Windows x64 Bundled Tools` (`.\gradlew.bat --no-daemon build` + embedded `yt-dlp`/`deno` version smoke test from shaded `All` JAR on `windows-latest`)
+  - `Windows x64 Build` (`.\gradlew.bat --no-daemon build` on `windows-latest`)
 - `build-and-test.yml` runs for all `dev`/`main` pushes and PRs, without path exclusions. `tag-dev.yml` reconciles successful development CI runs into `vYYMM.major.minor.beta-n` tags. `promote-main.yml` requires exact successful dev HEAD and creates its tagged merge commit atomically using environment `main-promotion`. `.circleci/config.yml` remains a legacy build job.
 
 ## MCP extensions

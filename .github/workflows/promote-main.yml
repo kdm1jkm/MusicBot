@@ -76,7 +76,7 @@ jobs:
             jobs_verified=$(gh api \
               "repos/$GH_REPO/actions/runs/$run_id/jobs?filter=all&per_page=100" \
               --paginate --slurp \
-              --jq '[.[].jobs[]] as $jobs | all(["Build and Test", "Windows x64 Bundled Tools"][]; . as $required | [$jobs[] | select(.name == $required)] | group_by(.run_attempt // 1) | (last // []) | length == 1 and all(.[]; .status == "completed" and .conclusion == "success"))')
+              --jq '[.[].jobs[]] as $jobs | all(["Build and Test", "Windows x64 Build"][]; . as $required | [$jobs[] | select(.name == $required)] | group_by(.run_attempt // 1) | (last // []) | length == 1 and all(.[]; .status == "completed" and .conclusion == "success"))')
             if [[ $jobs_verified == true ]]; then
               ci_verified=true
               printf 'Linux/Windows CI 확인: https://github.com/%s/actions/runs/%s\n' "$GH_REPO" "$run_id"

@@ -123,7 +123,6 @@ class BotConfigMigrationIntegrationTest extends BaseConfigTest {
             assertTrue(config.getStay());
             assertEquals(3600L, config.getMaxSeconds());
             assertEquals(20, config.getMaxYTPlaylistPages());
-            assertEquals("", config.getYouTubeCookiesFile());
             assertEquals(300L, config.getAloneTimeUntilStop());
             assertEquals("CustomPlaylists", config.getPlaylistsFolder());
             assertFalse(config.useUpdateAlerts());
@@ -203,10 +202,10 @@ class BotConfigMigrationIntegrationTest extends BaseConfigTest {
             Path configFile = createTempConfigFile(legacyConfig);
             setConfigFileProperty(configFile);
             
-            // Create defaults that claim a future version with no migration path (3->4 missing)
+            // Create defaults that claim a future version with no migration path (4->5 missing)
             Config fakeDefaults = ConfigIO.loadDefaults().withValue(
                     "meta.configVersion",
-                    ConfigValueFactory.fromAnyRef(4));
+                    ConfigValueFactory.fromAnyRef(5));
             
             // Mock ConfigIO.loadDefaults() to return our fake defaults
             try (MockedStatic<ConfigIO> mockedConfigIO = Mockito.mockStatic(ConfigIO.class)) {

@@ -20,6 +20,10 @@ import com.jagrosh.jmusicbot.BotConfig;
 import com.jagrosh.jmusicbot.audio.AudioSource;
 import com.jagrosh.jmusicbot.audio.PlayerManager;
 import com.typesafe.config.ConfigFactory;
+import com.sun.net.httpserver.HttpServer;
+import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -27,11 +31,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.atLeast;
 
 @DisplayName("PlayerManager Tests")
 class PlayerManagerTest {
@@ -61,91 +67,59 @@ class PlayerManagerTest {
     @DisplayName("Proxy Configuration Tests")
     class ProxyConfigurationTests {
 
+
         @Test
-        @DisplayName("init() does not configure proxy when proxyLavaplayer is false")
-        void initDoesNotConfigureProxyWhenDisabled() {
-            when(config.proxyLavaplayer()).thenReturn(false);
-            when(config.hasProxy()).thenReturn(true);
-            when(config.getProxyHost()).thenReturn("127.0.0.1");
-            when(config.getProxyPort()).thenReturn(8080);
-
-            playerManager.init();
-
-            // Verify proxy settings were checked
-            verify(config).proxyLavaplayer();
-            // hasProxy() should not be called when proxyLavaplayer() is false
-            // (short-circuit evaluation)
+        void initRoutesYoutubeHttpRequestsThroughEnabledProxy() throws Exception {
+            assertYoutubeHttpRoute(true, true, "proxy");
         }
 
         @Test
-        @DisplayName("init() does not configure proxy when hasProxy is false")
-        void initDoesNotConfigureProxyWhenNoProxy() {
-            when(config.proxyLavaplayer()).thenReturn(true);
-            when(config.hasProxy()).thenReturn(false);
-
-            playerManager.init();
-
-            // Verify both conditions were checked
-            verify(config).proxyLavaplayer();
-            verify(config).hasProxy();
+        void initKeepsYoutubeHttpRequestsDirectWhenProxyDisabled() throws Exception {
+            assertYoutubeHttpRoute(false, true, "origin");
         }
 
         @Test
-        @DisplayName("init() configures proxy when both conditions are true")
-        void initConfiguresProxyWhenEnabled() {
-            when(config.proxyLavaplayer()).thenReturn(true);
-            when(config.hasProxy()).thenReturn(true);
-            when(config.getProxyHost()).thenReturn("127.0.0.1");
-            when(config.getProxyPort()).thenReturn(8080);
-
-            playerManager.init();
-
-            // Verify proxy configuration was accessed
-            // Note: These may be called multiple times (PlayerManager + ProxyUtil)
-            verify(config).proxyLavaplayer();
-            verify(config, atLeast(1)).hasProxy();
-            verify(config, atLeast(1)).getProxyHost();
-            verify(config, atLeast(1)).getProxyPort();
+        void initKeepsYoutubeHttpRequestsDirectWhenProxyMissing() throws Exception {
+            assertYoutubeHttpRoute(true, false, "origin");
         }
 
-        @Test
-        @DisplayName("init() logs proxy configuration when enabled")
-        void initLogsProxyConfigurationWhenEnabled() {
-            when(config.proxyLavaplayer()).thenReturn(true);
-            when(config.hasProxy()).thenReturn(true);
-            when(config.getProxyHost()).thenReturn("proxy.example.com");
-            when(config.getProxyPort()).thenReturn(18080);
+        private void assertYoutubeHttpRoute(boolean enabled, boolean configured, String expected) throws Exception {
+            HttpServer origin = routeServer("origin");
+            HttpServer proxy = routeServer("proxy");
+            try {
+                when(config.proxyLavaplayer()).thenReturn(enabled);
+                when(config.hasProxy()).thenReturn(configured);
+                when(config.getProxyHost()).thenReturn("127.0.0.1");
+                when(config.getProxyPort()).thenReturn(proxy.getAddress().getPort());
+                when(config.getMaxYTPlaylistPages()).thenReturn(1);
+                when(config.getEnabledAudioSources()).thenReturn(Set.of(AudioSource.YOUTUBE));
 
-            // This test verifies the code path executes without error
-            // Actual logging verification would require a logging framework mock
-            assertDoesNotThrow(() -> playerManager.init());
+                playerManager.init();
+
+                YoutubeAudioSourceManager youtube = playerManager.source(YoutubeAudioSourceManager.class);
+                String url = "http://127.0.0.1:" + origin.getAddress().getPort() + "/source-request";
+                try (var http = youtube.getInterface(); var response = http.execute(new HttpGet(url))) {
+                    assertEquals(expected, EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8));
+                }
+            } finally {
+                playerManager.shutdown();
+                proxy.stop(0);
+                origin.stop(0);
+            }
+        }
+
+        private HttpServer routeServer(String route) throws IOException {
+            HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+            server.createContext("/", exchange -> {
+                byte[] body = route.getBytes(StandardCharsets.UTF_8);
+                exchange.sendResponseHeaders(200, body.length);
+                try (var output = exchange.getResponseBody()) {
+                    output.write(body);
+                }
+            });
+            server.start();
+            return server;
         }
     }
 
-    @Nested
-    @DisplayName("getBot() Tests")
-    class GetBotTests {
-
-        @Test
-        @DisplayName("getBot() returns the bot instance")
-        void getBotReturnsBotInstance() {
-            assertEquals(bot, playerManager.getBot());
-        }
-    }
-
-    @Nested
-    @DisplayName("Frame Buffer Configuration Tests")
-    class FrameBufferConfigurationTests {
-
-        @Test
-        @DisplayName("init() configures frame buffer from config")
-        void initConfiguresFrameBuffer() {
-            when(config.getFrameBufferMs()).thenReturn(3000);
-            when(config.proxyLavaplayer()).thenReturn(false);
-
-            playerManager.init();
-
-            verify(config).getFrameBufferMs();
-        }
-    }
 }

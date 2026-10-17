@@ -125,7 +125,7 @@ jobs:
               fi
               if jq -e --arg sha "$sha" --argjson attempt "$attempt" '
                 [.[].jobs[] | select((.run_attempt // 1) <= $attempt)] as $jobs
-                | all(["Build and Test", "Windows x64 Bundled Tools"][];
+                | all(["Build and Test", "Windows x64 Build"][];
                     . as $required
                     | [$jobs[] | select(.name == $required)]
                     | group_by(.run_attempt // 1) | (last // [])

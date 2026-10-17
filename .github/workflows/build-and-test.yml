@@ -55,7 +55,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   windows:
-    name: Windows x64 Bundled Tools
+    name: Windows x64 Build
     runs-on: windows-latest
     timeout-minutes: 30
     permissions:
@@ -79,78 +79,4 @@ jobs:
           .\gradlew.bat --no-daemon build
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Smoke embedded tool versions from shaded JAR
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $jars = @(Get-ChildItem build/libs/JMusicBot-*-All.jar)
-          if ($jars.Count -ne 1) { throw 'Expected exactly one shaded All JAR' }
-          $jar = $jars[0].FullName
-          $java = Join-Path $env:JAVA_HOME 'bin/java.exe'
-          $launcher = Join-Path $PWD 'build/BundledToolsSmoke.java'
-          @'
-          import com.jagrosh.jmusicbot.audio.ytdlp.BundledYtDlpRuntime;
-          import java.nio.charset.StandardCharsets;
-          import java.nio.file.Files;
-          import java.nio.file.Path;
-          import java.util.Properties;
-          import java.util.concurrent.TimeUnit;
 
-          public class BundledToolsSmoke {
-              static void version(Path executable, String expected, boolean allowBuildMetadata) throws Exception {
-                  Process process = new ProcessBuilder(executable.toAbsolutePath().toString(), "--version").start();
-                  process.getOutputStream().close();
-                  try {
-                      if (!process.waitFor(15, TimeUnit.SECONDS)) {
-                          throw new IllegalStateException("Bundled tool version deadline exceeded");
-                      }
-                      String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
-                      String versionLine = output.lines().findFirst().orElse("");
-                      boolean matches = versionLine.equals(expected)
-                              || (allowBuildMetadata && versionLine.startsWith(expected)
-                                  && versionLine.startsWith(" (", expected.length())
-                                  && versionLine.endsWith(")") && versionLine.length() > expected.length() + 3);
-                      if (process.exitValue() != 0 || !matches) {
-                          throw new IllegalStateException("Bundled tool version mismatch: " + executable.getFileName());
-                      }
-                      System.out.println(versionLine);
-                  } finally {
-                      process.destroyForcibly();
-                      process.getInputStream().close();
-                      process.getErrorStream().close();
-                  }
-              }
-
-              public static void main(String[] args) throws Exception {
-                  Properties tools = new Properties();
-                  try (var manifest = BundledToolsSmoke.class.getResourceAsStream("/ytdlp/windows-x86_64/tools.properties")) {
-                      if (manifest == null) throw new IllegalStateException("Missing bundled checksum manifest");
-                      tools.load(manifest);
-                  }
-                  Path directory;
-                  try (var runtime = BundledYtDlpRuntime.open()) {
-                      directory = runtime.executable().getParent();
-                      version(runtime.executable(), tools.getProperty("ytdlp.version"), false);
-                      version(runtime.denoExecutable(), "deno " + tools.getProperty("deno.version"), true);
-                  }
-                  if (Files.exists(directory)) throw new IllegalStateException("Bundled runtime directory leaked");
-              }
-          }
-          '@ | Set-Content -Path $launcher -Encoding utf8
-          $smokeDirectory = Join-Path $PWD 'build/Packaged tools 한글 smoke'
-          New-Item -ItemType Directory -Path $smokeDirectory | Out-Null
-          $oldPath = $env:PATH
-          try {
-            # No installed yt-dlp, Deno, Python or FFmpeg; no media/network dependency.
-            $env:PATH = Join-Path $env:JAVA_HOME 'bin'
-            Push-Location $smokeDirectory
-            try {
-              & $java --enable-native-access=ALL-UNNAMED -cp $jar $launcher
-              if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-            } finally {
-              Pop-Location
-            }
-          } finally {
-            $env:PATH = $oldPath
-            Remove-Item $launcher
-          }

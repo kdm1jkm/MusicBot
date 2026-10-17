@@ -30,7 +30,15 @@ import com.sedmelluq.discord.lavaplayer.source.nico.NicoAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager;
-import com.jagrosh.jmusicbot.audio.ytdlp.YtDlpAudioSourceManager;
+import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.clients.AndroidWithThumbnail;
+import dev.lavalink.youtube.clients.AndroidVrWithThumbnail;
+import dev.lavalink.youtube.clients.ClientOptions;
+import dev.lavalink.youtube.clients.IosWithThumbnail;
+import dev.lavalink.youtube.clients.MusicWithThumbnail;
+import dev.lavalink.youtube.clients.WebEmbeddedWithThumbnail;
+import dev.lavalink.youtube.clients.WebWithThumbnail;
+import org.apache.http.HttpHost;
 
 import com.jagrosh.jmusicbot.BotConfig;
 import com.jagrosh.jmusicbot.utils.ProxyUtil;
@@ -59,9 +67,24 @@ public enum AudioSource
         "youtube",
         "YouTube videos and playlists",
         10,
-        (manager, config) -> manager.registerSourceManager(new YtDlpAudioSourceManager(
-                config.getMaxYTPlaylistPages(), config.getYouTubeCookiesFile(),
-                config.proxyLavaplayer() && config.hasProxy() ? ProxyUtil.createApacheProxy(config) : null))
+        (manager, config) -> {
+            HttpHost proxy = config.proxyLavaplayer() && config.hasProxy()
+                    ? ProxyUtil.createApacheProxy(config) : null;
+            WebEmbeddedWithThumbnail embedded = proxy == null
+                    ? new WebEmbeddedWithThumbnail() : new ProxiedWebEmbeddedClient(proxy);
+            // Android VR still loads playlists, but its playback endpoint can require login.
+            ClientOptions metadataOnly = new ClientOptions();
+            metadataOnly.setPlayback(false);
+            YoutubeAudioSourceManager youtube = new YoutubeAudioSourceManager(
+                    new MusicWithThumbnail(), new AndroidVrWithThumbnail(metadataOnly),
+                    new AndroidWithThumbnail(), new IosWithThumbnail(),
+                    new WebWithThumbnail(), embedded);
+            youtube.setPlaylistPageCount(config.getMaxYTPlaylistPages());
+            if (proxy != null) {
+                youtube.getHttpInterfaceManager().configureBuilder(builder -> builder.setProxy(proxy));
+            }
+            manager.registerSourceManager(youtube);
+        }
     ),
     SOUNDCLOUD(
         "soundcloud",

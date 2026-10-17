@@ -14,7 +14,7 @@
 [![라이선스](https://img.shields.io/github/license/kdm1jkm/MusicBot.svg)](https://github.com/kdm1jkm/MusicBot/blob/main/LICENSE)
 [![빌드 및 테스트](https://github.com/kdm1jkm/MusicBot/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/kdm1jkm/MusicBot/actions/workflows/build-and-test.yml)
 
-깔끔한 인터페이스를 제공하는 Discord 음악 봇입니다. 대부분의 음원 소스는 여러 운영체제에서 사용할 수 있지만, 내장 YouTube 백엔드는 Windows x64가 필요합니다.
+깔끔한 인터페이스와 내장 youtube-source 재생을 제공하는 Discord 음악 봇입니다.
 
 ## Java 버전 및 필수 요구 사항
 
@@ -40,11 +40,11 @@
 
 ## 지원 소스 및 형식
 
-[lavaplayer](https://github.com/lavalink-devs/lavaplayer#supported-formats)의 음원 소스와 형식을 지원합니다. YouTube에는 아래의 운영체제 제한이 적용됩니다.
+[lavaplayer](https://github.com/lavalink-devs/lavaplayer#supported-formats)의 음원 소스와 형식을 지원합니다.
 
 ### 음원 소스
 
-- YouTube — Windows x64, 내장 yt-dlp 사용
+- YouTube — youtube-source 사용
 - SoundCloud
 - Bandcamp
 - Vimeo
@@ -69,7 +69,7 @@
 
 ## 설정
 
-1. **Java 25 이상**을 설치하고 `java -version`으로 확인합니다. YouTube를 재생하려면 **Windows x64**를 사용하세요. Linux에서는 [시스템 요구 사항](#linux-시스템-요구-사항)의 네이티브 라이브러리도 필요합니다.
+1. **Java 25 이상**을 설치하고 `java -version`으로 확인합니다. Linux에서는 [시스템 요구 사항](#linux-시스템-요구-사항)의 네이티브 라이브러리도 필요합니다.
 2. 이 포크의 [릴리스](https://github.com/kdm1jkm/MusicBot/releases)에서 `JMusicBot-2610.1.0-All.jar`를 다운로드하거나, 아래에 설명한 Gradle Wrapper로 직접 빌드합니다. JAR 파일은 봇 전용 디렉터리에 둡니다.
 3. [Discord Developer Portal](https://discord.com/developers/applications)에서 애플리케이션과 봇을 생성하고 **봇 토큰**을 발급받습니다. Bot 페이지에서 **Message Content Intent**를 활성화하세요. 토큰은 비밀로 보관해야 합니다. OAuth2의 URL Generator에서 `bot`과 `applications.commands`를 선택하고, 음악을 사용할 채널의 메시지 보기·보내기 및 음성 채널 연결·말하기 권한을 부여합니다. 생성된 URL을 열어 봇을 서버에 초대합니다.
 4. Discord의 **사용자 설정 > 고급 > 개발자 모드**를 활성화한 뒤, 자신의 프로필을 오른쪽 클릭하고 **사용자 ID 복사**를 선택합니다. 애플리케이션 ID나 서버 ID가 아닌 **봇 소유자의 사용자 ID**가 필요합니다.
@@ -82,7 +82,7 @@
    }
    ```
 
-   나머지는 필요한 경우에만 기본값을 변경하세요. Linux, macOS 또는 Docker에서는 `playback.audioSources.youtube = false`도 설정합니다. `config.txt`를 커밋하거나 토큰을 공유하지 마세요.
+   나머지는 필요한 경우에만 기본값을 변경하세요. `config.txt`를 커밋하거나 토큰을 공유하지 마세요.
 6. **해당 디렉터리에서** 아래 명령을 실행합니다. 설정과 재생목록의 상대 경로는 작업 디렉터리를 기준으로 합니다. Discord에서는 `/help`를 사용하거나 봇을 멘션한 뒤 `help`를 입력하세요.
 
 ## 직접 실행 — Docker 미사용
@@ -105,23 +105,15 @@ java "-Dfile.encoding=UTF-8" "-Dnogui=true" "--enable-native-access=ALL-UNNAMED"
 
 `-Dfile.encoding=UTF-8`은 한국어 등 비영어권 문자가 Discord에서 올바르게 표시되도록 합니다. Windows 또는 이전 JDK에서는 이 옵션이 없을 때 슬래시 명령 자동 완성이나 임베드의 문자가 깨질 수 있습니다.
 
-### 내장 YouTube 재생 (Windows x64)
+### YouTube 재생
 
-Java 25 이상에서 `JMusicBot-2610.1.0-All.jar`를 실행하세요. 단일 JAR 안에 고정 버전의 yt-dlp, EJS 스크립트와 Deno가 포함됩니다. **Python·yt-dlp·Deno·FFmpeg를 따로 설치할 필요가 없으며, 최초 실행 시 도구를 다운로드하지 않습니다.** YouTube를 처음 사용할 때 체크섬을 검증한 뒤 전용 임시 디렉터리에 도구를 추출하고, 종료 시 제거합니다. JAR 디렉터리는 읽기 전용이어도 되지만, 시스템 임시 디렉터리에서는 실행 파일의 추출과 실행이 허용되어야 합니다.
+Java 25 이상에서 `JMusicBot-2610.1.0-All.jar`를 실행하세요. YouTube는 [youtube-source](https://github.com/lavalink-devs/youtube-source)의 Lavaplayer 2.x용 `v2` 모듈을 봇 내부에서 사용합니다. release 1.18.2에 없는 Android/iOS 재생 수정을 포함한 upstream commit [`2be8e542`](https://github.com/lavalink-devs/youtube-source/commit/2be8e542d3f6f178e048dca565892684c2e40177)의 불변 빌드 `20260917.205250-1`로 고정하며 `v2`와 `common` 버전은 `build.gradle`에서 함께 관리합니다. 재생은 Android/iOS 클라이언트를 사용하고 Android VR은 메타데이터 전용으로 유지합니다. 별도 Lavalink 서버, yt-dlp, Python, Deno, FFmpeg는 필요하지 않으며 YouTube용 실행 파일을 추출하거나 별도 프로세스로 실행하지 않습니다.
 
-YouTube 로딩·검색·재생목록·탐색·반복 재생에는 안정적인 공개 영상 URL을 사용합니다. 실제 미디어 URL은 재생 직전에 새로 해석하고 접근 가능 여부를 확인합니다. 일반 영상은 WebM/Opus 또는 M4A/AAC로 재생합니다. 라이브는 MPEG-TS 또는 packed-AAC HLS를 지원하며 탐색할 수 없습니다. 지원하지 않는 컨테이너는 명확한 오류로 처리합니다. **Linux·macOS·Docker에서는 YouTube를 재생할 수 없으며**, 다른 활성화된 음원 소스는 계속 사용할 수 있습니다.
+영상 URL·검색·재생목록·탐색·반복 재생은 upstream 소스가 처리합니다. `playback.maxYouTubePlaylistPages`로 재생목록 로딩을 제한하며 기존 Lavaplayer 프록시 설정도 YouTube에 적용됩니다. 백엔드 자체의 Windows 전용 제한은 없지만, 각 플랫폼의 Java/native 오디오 지원과 YouTube의 네트워크·계정·IP 제한은 적용됩니다.
 
-기본적으로 로그인 없이 공개 영상을 재생합니다. YouTube가 계정 인증을 요구하거나 IP의 접근을 거부하면, 사용자가 직접 내보낸 유효한 **Netscape 형식 쿠키 파일**을 GUI의 선택적 YouTube 쿠키 항목이나 설정에 지정하세요.
+설정은 자동으로 버전 4로 마이그레이션되며 폐기된 `playback.youtube.cookiesFile` 옵션을 제거합니다. 쿠키 파일과 기존 `youtubetoken.txt` 파일은 삭제하지 않지만 이 백엔드에서 읽지 않습니다. GUI의 yt-dlp 쿠키 입력란도 제거합니다. upstream의 OAuth·poToken·remote cipher 설정은 이 봇에서 제공하지 않습니다.
 
-```hocon
-playback.youtube.cookiesFile = "C:/MusicBot/youtube-cookies.txt"
-```
-
-상대 경로는 봇의 작업 디렉터리를 기준으로 합니다. 지정한 파일은 읽을 수 있어야 하며, 각 작업마다 별도로 복사해 사용하므로 봇이 원본을 수정하지 않습니다. 봇은 브라우저 프로필을 읽거나 인증 정보를 내보내지 않습니다. 쿠키 파일은 비밀로 보관하고 소스 저장소에 올리지 마세요. 계정을 사용하면 요청 제한이나 계정 차단이 발생할 수 있습니다. [yt-dlp의 YouTube 쿠키 안내](https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies)를 확인하세요. 내장 도구가 있어도 비공개 영상, 계정 또는 네트워크의 접근 제한을 우회할 수는 없습니다.
-
-설정은 자동으로 버전 3으로 마이그레이션됩니다. 이전 YouTube OAuth/cipher 설정과 백엔드는 제거되었습니다. 기존 `youtubetoken.txt` 파일은 삭제하지 않지만 더 이상 사용하지 않습니다.
-
-빌드는 JDK 25와 고정된 Gradle 9.1.0 Wrapper를 사용합니다. `./gradlew --no-daemon build`를 실행하세요. Windows에서는 `.\gradlew.bat --no-daemon build`를 사용합니다. 단위·통합 테스트를 실행한 뒤 `build/libs/JMusicBot-2610.1.0-All.jar`를 생성합니다. Gradle을 전역으로 설치할 필요는 없으며, 버전은 `gradle.properties`에서 관리합니다. 빌드 시 체크섬으로 고정한 Windows 도구를 다운로드해 단일 `All.jar`에 포함합니다. 도구를 다운로드할 수 없거나 파일이 손상되었으면 빌드가 실패합니다. yt-dlp nightly `2026.10.10.233141`과 Deno `2.9.7`을 사용하며, 업데이트하려면 빌드 버전과 체크섬을 함께 변경해야 합니다. 런타임 자동 업데이트는 하지 않습니다. 내장 프로그램에는 각각의 라이선스가 적용되며, yt-dlp 독립 실행 배포판에는 GPLv3+ 조건이 적용됩니다. 고지와 대응 소스·빌드 출처 정보는 `META-INF/third-party/ytdlp/` 및 `META-INF/third-party/deno/`에 있습니다. 재배포 시 이 고지를 유지하고 해당 소스 제공 의무를 충족해야 합니다.
+빌드는 JDK 25와 고정된 Gradle 9.1.0 Wrapper를 사용합니다. `./gradlew --no-daemon build`를 실행하세요. Windows에서는 `.\gradlew.bat --no-daemon build`를 사용합니다. 단위·통합 테스트 실행 후 `build/libs/JMusicBot-2610.1.0-All.jar`를 생성합니다. Gradle을 전역으로 설치할 필요는 없으며 버전은 `gradle.properties`에서 관리합니다. 패키징은 Java 의존성을 가져오며, 기존 Windows yt-dlp/Deno 바이너리와 해당 배포 고지는 더 이상 포함하지 않습니다.
 
 ### Linux 시스템 요구 사항
 
@@ -153,12 +145,12 @@ sudo apt-get install -y libopus0 libsodium23
 docker build -t jmusicbot:2610.1.0 .
 ```
 
-컨테이너에는 Java 25가 포함되며 GUI 없이 실행됩니다. **내장 yt-dlp/Deno가 Windows x64 전용이므로 Linux 컨테이너에서는 YouTube를 재생할 수 없습니다.** 다른 활성화된 음원 소스는 사용할 수 있습니다.
+컨테이너에는 Java 25가 포함되며 GUI 없이 실행됩니다. YouTube는 데스크톱과 동일한 내장 youtube-source 백엔드를 사용하며 YouTube의 네트워크·IP 제한은 적용됩니다.
 
 ### 빠른 시작
 
 1. 봇 데이터를 유지할 디렉터리를 만듭니다. 기존 `config.txt`, `Playlists/` 등의 파일이 있는 디렉터리를 사용해도 됩니다.
-2. [설정](#설정)에 따라 `config.txt`를 만들고 `discord.token`, `discord.owner` 및 `playback.audioSources.youtube = false`를 설정합니다.
+2. [설정](#설정)에 따라 `config.txt`를 만들고 `discord.token`, `discord.owner`를 설정합니다.
 3. 컨테이너는 UID/GID `10001:10001`로 실행됩니다. 해당 사용자가 마운트할 디렉터리를 읽고 쓸 수 있도록 권한을 부여하세요. Linux에서는 다음과 같이 설정할 수 있습니다.
 
    ```bash
@@ -308,9 +300,8 @@ CI에서 브랜치 이름 규칙을 검사합니다. 개발 절차, 브랜치 �
 
 - [**JDA**](https://github.com/discord-jda/JDA)
 - [**lavaplayer**](https://github.com/lavalink-devs/lavaplayer)
-- [**yt-dlp**](https://github.com/yt-dlp/yt-dlp)와 [**EJS 스크립트**](https://github.com/yt-dlp/ejs)
-- [**Deno**](https://github.com/denoland/deno)
+- [**youtube-source**](https://github.com/lavalink-devs/youtube-source)
 
 ## 소스 수정 및 라이선스
 
-기여와 빌드 방법은 [개발 워크플로 문서](docs/DEVELOPMENT_WORKFLOW.md)를 참고하세요. 이 포크는 원작자 표시와 프로젝트의 [Apache 2.0 라이선스](LICENSE)를 유지합니다. 내장된 타사 프로그램에는 각각의 라이선스가 적용됩니다. JAR를 재배포할 때는 해당 고지를 유지하고, [내장 YouTube 재생 안내](#내장-youtube-재생-windows-x64)에 설명된 GPLv3+ 대응 소스 제공 의무도 충족해야 합니다.
+기여와 빌드 방법은 [개발 워크플로 문서](docs/DEVELOPMENT_WORKFLOW.md)를 참고하세요. 이 포크는 원작자 표시와 프로젝트의 [Apache 2.0 라이선스](LICENSE)를 유지합니다. 내장 Java 의존성에는 각각의 라이선스와 해당 고지가 적용됩니다.

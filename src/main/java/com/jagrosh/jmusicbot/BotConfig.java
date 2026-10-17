@@ -60,7 +60,7 @@ public class BotConfig {
     private Path path = null;
     private String token, prefix, altprefix, helpWord, playlistsFolder, logLevel,
             successEmoji, warningEmoji, errorEmoji, loadingEmoji, searchingEmoji,
-            evalEngine, guiTheme, youTubeCookiesFile;
+            evalEngine, guiTheme;
     private boolean stayInChannel, songInGame, npImages, npMinimalMessage, npShowButtons, showNpProgressBar, updatealerts, useEval, dbots, guiEnabled;
     private long owner, maxSeconds, aloneTimeUntilStop;
     private long clearChannelAgeDays;
@@ -268,7 +268,6 @@ public class BotConfig {
         maxSeconds = MAX_SECONDS.getLong(config);
         maxYTPlaylistPages = MAX_YT_PLAYLIST_PAGES.getInt(config);
         maxHistorySize = MAX_HISTORY_SIZE.getInt(config);
-        youTubeCookiesFile = YOUTUBE_COOKIES_FILE.getString(config);
         aloneTimeUntilStop = ALONE_TIME_UNTIL_STOP.getLong(config);
         playlistsFolder = PLAYLISTS_FOLDER.getString(config);
         aliases = ALIASES.getConfig(config);
@@ -516,9 +515,6 @@ public class BotConfig {
         return maxHistorySize;
     }
 
-    public String getYouTubeCookiesFile() {
-        return youTubeCookiesFile;
-    }
 
     public String getMaxTime() {
         return TimeUtil.formatTime(maxSeconds * 1000);
